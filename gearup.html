@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#0a1628">
+<title>KODABIZ 기업정보 조회</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0a1628;--surface:#0f1f38;--surface2:#162a4a;--border:#1e3a5f;--accent:#0ea5e9;--accent2:#38bdf8;--accent-glow:rgba(14,165,233,0.15);--green:#10b981;--amber:#f59e0b;--red:#ef4444;--text:#e2e8f0;--text2:#94a3b8;--text3:#64748b;--white:#fff;--teal:#14b8a6}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{scroll-behavior:smooth}
+body{font-family:'Noto Sans KR',-apple-system,BlinkMacSystemFont,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;min-height:100dvh;overflow-x:hidden;-webkit-font-smoothing:antialiased;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom) 0}
+.bg-grid{position:fixed;top:0;left:0;width:100%;height:100%;background-image:linear-gradient(rgba(14,165,233,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(14,165,233,.03) 1px,transparent 1px);background-size:60px 60px;pointer-events:none;z-index:0}
+/* LOGIN */
+.login-screen{position:fixed;top:0;left:0;right:0;bottom:0;z-index:9999;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:20px}
+.login-screen.hidden{display:none}
+.login-card{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:36px 28px;width:100%;max-width:380px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.5)}
+.login-logo{width:120px;margin:0 auto 20px;border-radius:12px;overflow:hidden}
+.login-logo img{width:100%;height:auto;display:block}
+.login-title{font-size:18px;font-weight:900;color:var(--white);margin-bottom:4px}
+.login-sub{font-size:12px;color:var(--text3);margin-bottom:24px}
+.login-input{width:100%;padding:14px 16px;background:var(--surface2);border:1.5px solid var(--border);border-radius:12px;color:var(--white);font-size:16px;font-family:inherit;outline:none;text-align:center;letter-spacing:4px;transition:border-color .25s;margin-bottom:16px}
+.login-input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-glow)}
+.login-input::placeholder{letter-spacing:0;font-size:14px;color:var(--text3)}
+.login-btn{width:100%;padding:14px;background:linear-gradient(135deg,var(--accent),#0284c7);border:none;border-radius:12px;color:#fff;font-size:15px;font-weight:700;font-family:inherit;cursor:pointer;transition:all .2s}
+.login-btn:active{transform:scale(.97)}
+.login-error{color:var(--red);font-size:13px;margin-top:12px;display:none}
+.login-error.show{display:block;animation:shake .4s ease}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+/* APP */
+.app{display:none}.app.show{display:block}
+.container{max-width:960px;margin:0 auto;padding:16px;position:relative;z-index:1}
+.header{text-align:center;padding:24px 12px 16px;position:relative}
+.header::before{content:'';position:absolute;top:-40px;left:50%;transform:translateX(-50%);width:240px;height:240px;background:radial-gradient(circle,rgba(14,165,233,.12),transparent 70%);pointer-events:none}
+.header-logo{height:40px;margin-bottom:12px}
+h1{font-size:clamp(16px,4.5vw,28px);font-weight:900;background:linear-gradient(135deg,#fff,#7dd3fc 50%,#38bdf8);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;letter-spacing:-.5px;line-height:1.3}
+.subtitle{color:var(--text2);font-size:12px;margin-top:4px;font-weight:300}
+.stats-row{display:flex;justify-content:center;gap:20px;margin-top:14px}
+.stat-item{text-align:center}.stat-num{font-size:20px;font-weight:900;color:var(--accent2)}.stat-label{font-size:10px;color:var(--text3)}
+/* TABS */
+.tab-bar{display:flex;gap:0;margin:0 0 4px;background:var(--surface);border-radius:12px;border:1px solid var(--border);overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.tab-bar::-webkit-scrollbar{display:none}
+.tab-btn{flex:0 0 auto;padding:11px 14px;border:none;background:transparent;color:var(--text3);font-size:12px;font-weight:600;font-family:inherit;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:5px;white-space:nowrap}
+.tab-btn.active{background:var(--accent);color:#fff;border-radius:10px}
+.tab-btn:active{opacity:.8}
+.tab-btn svg{width:14px;height:14px}
+.tab-content{display:none}.tab-content.active{display:block}
+/* SEARCH */
+.search-section{position:sticky;top:0;z-index:200;padding:8px 0 12px;background:rgba(10,22,40,.92);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px)}
+.search-wrap{position:relative}
+.search-box{position:relative;background:var(--surface);border:1.5px solid var(--border);border-radius:14px;overflow:hidden;transition:all .25s}
+.search-box:focus-within{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-glow),0 4px 20px rgba(0,0,0,.3)}
+.search-box input{width:100%;padding:14px 48px 14px 44px;background:transparent;border:none;color:var(--white);font-size:16px;font-family:inherit;outline:none}
+.search-box input::placeholder{color:var(--text3);font-size:14px}
+.search-icon{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--text3);pointer-events:none}
+.search-icon svg{width:18px;height:18px}
+.clr-btn{position:absolute;right:10px;top:50%;transform:translateY(-50%);background:var(--surface2);border:none;color:var(--text3);width:30px;height:30px;border-radius:8px;cursor:pointer;display:none;align-items:center;justify-content:center;font-size:16px}
+.clr-btn.show{display:flex}
+.ac-overlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.4);z-index:199}.ac-overlay.show{display:block}
+.autocomplete{position:absolute;top:calc(100% + 4px);left:0;right:0;background:var(--surface);border:1.5px solid var(--border);border-radius:14px;overflow-y:auto;box-shadow:0 12px 40px rgba(0,0,0,.6);display:none;z-index:201;-webkit-overflow-scrolling:touch;max-height:min(360px,50vh)}
+.autocomplete.show{display:block}
+.ac-item{padding:13px 16px;cursor:pointer;display:flex;align-items:center;gap:10px;border-bottom:1px solid rgba(255,255,255,.04);min-height:52px}
+.ac-item:active,.ac-item.active{background:var(--accent-glow)}
+.ac-item:last-child{border-bottom:none}
+.ac-name{font-weight:500;font-size:14px}.ac-meta{font-size:11px;color:var(--text3);margin-top:1px}
+.ac-badge{margin-left:auto;padding:3px 8px;border-radius:6px;font-size:10px;font-weight:700;flex-shrink:0;background:rgba(14,165,233,.15);color:var(--accent2)}
+.ac-count{padding:10px 16px;font-size:12px;color:var(--text3);border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--surface);z-index:1}
+/* RESULT */
+.result{display:none;animation:fadeUp .4s ease}.result.show{display:block}
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+.company-hero{background:linear-gradient(135deg,var(--surface),var(--surface2));border:1px solid var(--border);border-radius:16px;padding:20px;margin:16px 0 12px;position:relative;overflow:hidden}
+.company-hero::before{content:'';position:absolute;top:-50px;right:-50px;width:160px;height:160px;background:radial-gradient(circle,rgba(14,165,233,.1),transparent 70%);pointer-events:none}
+.hero-top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;position:relative;z-index:1}
+.company-name{font-size:clamp(20px,5vw,28px);font-weight:900;color:var(--white);line-height:1.25;word-break:keep-all}
+.fav-btn{width:40px;height:40px;border-radius:10px;border:1px solid var(--border);background:var(--surface2);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .2s}
+.fav-btn:active{transform:scale(.9)}
+.fav-btn svg{width:20px;height:20px;color:var(--text3);transition:all .2s}
+.fav-btn.on svg{color:#f59e0b;fill:#f59e0b}
+.badge-row{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+.badge{padding:3px 10px;border-radius:6px;font-size:11px;font-weight:600;display:inline-flex;align-items:center;gap:4px;white-space:nowrap}
+.badge-year{background:rgba(14,165,233,.15);color:var(--accent2);border:1px solid rgba(14,165,233,.25)}
+.badge-inn{background:rgba(245,158,11,.12);color:var(--amber);border:1px solid rgba(245,158,11,.25)}
+.badge-ven{background:rgba(236,72,153,.12);color:#ec4899;border:1px solid rgba(236,72,153,.25)}
+.badge-wom{background:rgba(244,114,182,.12);color:#f472b6;border:1px solid rgba(244,114,182,.25)}
+.badge-dis{background:rgba(168,85,247,.12);color:#a855f7;border:1px solid rgba(168,85,247,.25)}
+.badge-soc{background:rgba(20,184,166,.12);color:var(--teal);border:1px solid rgba(20,184,166,.25)}
+.badge-gpass{background:rgba(16,185,129,.12);color:var(--green);border:1px solid rgba(16,185,129,.25)}
+.badge-cat{background:rgba(99,102,241,.12);color:#818cf8;border:1px solid rgba(99,102,241,.25)}
+.quick-info{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:16px}
+.pill{display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.04);border-radius:10px;padding:10px 12px;min-width:0}
+.pill svg{width:14px;height:14px;color:var(--text3);flex-shrink:0}
+.pill-content{min-width:0;overflow:hidden}.pill-label{font-size:10px;color:var(--text3)}.pill-value{font-size:12px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.section-grid{display:flex;flex-direction:column;gap:10px;margin-bottom:10px}
+.section-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden}
+.section-header{padding:14px 16px;display:flex;align-items:center;gap:8px;cursor:pointer;user-select:none;-webkit-user-select:none}
+.section-header:active{background:rgba(255,255,255,.02)}
+.section-header svg.si{width:16px;height:16px;color:var(--accent);flex-shrink:0}
+.stxt{font-size:13px;font-weight:700;color:var(--text2);flex:1}
+.sarr{width:20px;height:20px;color:var(--text3);transition:transform .3s;flex-shrink:0}
+.sarr.open{transform:rotate(180deg)}
+.sbody{max-height:0;overflow:hidden;transition:max-height .35s ease}.sbody.open{max-height:800px}
+.sbody-in{padding:0 16px 14px}
+.info-row{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid rgba(255,255,255,.04);gap:12px}
+.info-row:last-child{border-bottom:none}
+.info-key{font-size:12px;color:var(--text3);flex-shrink:0;min-width:70px}
+.info-val{font-size:13px;color:var(--text);text-align:right;word-break:break-all;min-width:0}
+.info-val a{color:var(--accent2);text-decoration:none}
+/* EMPTY */
+.empty-state{text-align:center;padding:60px 20px;color:var(--text3)}
+.empty-state svg{width:48px;height:48px;margin-bottom:12px;opacity:.4}
+.empty-state p{font-size:14px}
+/* FILTER TAB */
+.filter-bar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.filter-select{padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:13px;font-family:inherit;outline:none;flex:1;min-width:100px;appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 12 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1.5L6 6.5L11 1.5' stroke='%2364748b' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;background-size:12px;padding-right:32px}
+.filter-select:focus{border-color:var(--accent)}
+.export-btn{padding:10px 16px;border-radius:10px;border:1px solid var(--border);background:var(--surface);color:var(--green);font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;display:flex;align-items:center;gap:6px;white-space:nowrap}
+.export-btn:active{transform:scale(.97)}
+.export-btn svg{width:14px;height:14px}
+.filter-results{font-size:12px;color:var(--text3);margin-bottom:8px}
+.ftable-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;border:1px solid var(--border);border-radius:14px;background:var(--surface);max-height:55vh;overflow-y:auto}
+.ftable{width:100%;border-collapse:collapse;font-size:12px;min-width:700px}
+.ftable th{background:var(--surface2);color:var(--text2);padding:11px 10px;text-align:left;font-weight:600;font-size:11px;position:sticky;top:0;z-index:1;white-space:nowrap;border-bottom:1px solid var(--border)}
+.ftable td{padding:10px;border-bottom:1px solid rgba(255,255,255,.04);color:var(--text);white-space:nowrap;max-width:180px;overflow:hidden;text-overflow:ellipsis}
+.ftable tr:hover td{background:rgba(14,165,233,.04)}
+.ftable .clickable{cursor:pointer;color:var(--accent2);font-weight:500}
+/* DASHBOARD */
+.dash-grid{display:grid;grid-template-columns:1fr;gap:12px}
+.dash-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:20px}
+.dash-title{font-size:13px;font-weight:700;color:var(--text2);margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.dash-title svg{width:16px;height:16px;color:var(--accent)}
+.hbar-wrap{display:flex;flex-direction:column;gap:6px;max-height:300px;overflow-y:auto}
+.hbar-row{display:flex;align-items:center;gap:8px;font-size:12px}
+.hbar-label{width:80px;text-align:right;color:var(--text2);flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hbar-track{flex:1;height:22px;background:var(--surface2);border-radius:6px;overflow:hidden;position:relative}
+.hbar-fill{height:100%;border-radius:6px;background:linear-gradient(90deg,var(--accent),#818cf8);transition:width .6s ease;display:flex;align-items:center;justify-content:flex-end;padding-right:8px;min-width:fit-content}
+.hbar-num{font-size:10px;font-weight:700;color:var(--white);white-space:nowrap}
+/* FAVORITES */
+.fav-list{display:flex;flex-direction:column;gap:8px}
+.fav-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 16px;display:flex;align-items:center;gap:12px;cursor:pointer;transition:border-color .2s}
+.fav-card:active{border-color:var(--accent)}
+.fav-info{flex:1;min-width:0}
+.fav-name{font-size:14px;font-weight:700;color:var(--white)}
+.fav-meta{font-size:11px;color:var(--text3);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fav-rm{width:32px;height:32px;border-radius:8px;border:1px solid var(--border);background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--text3);flex-shrink:0}
+.fav-rm:active{background:rgba(239,68,68,.1);color:var(--red)}
+/* BOTTOM NAV */
+.bottom-nav{position:fixed;bottom:0;left:0;right:0;background:rgba(15,31,56,.95);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-top:1px solid var(--border);display:flex;z-index:300;padding-bottom:env(safe-area-inset-bottom)}
+.bnav-btn{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:10px 4px 8px;border:none;background:transparent;color:var(--text3);font-size:10px;font-family:inherit;cursor:pointer}
+.bnav-btn.active{color:var(--accent2)}
+.bnav-btn svg{width:20px;height:20px}
+/* BACK TO TOP */
+.back-top{position:fixed;bottom:80px;right:16px;width:44px;height:44px;border-radius:12px;background:var(--accent);color:#fff;border:none;cursor:pointer;display:none;align-items:center;justify-content:center;z-index:250;box-shadow:0 4px 16px rgba(14,165,233,.4)}
+.back-top.show{display:flex}
+.back-top:active{transform:scale(.9)}
+.back-top svg{width:20px;height:20px}
+/* TOAST */
+.toast{position:fixed;bottom:100px;left:50%;transform:translateX(-50%);background:var(--surface2);color:var(--text);padding:10px 20px;border-radius:10px;font-size:13px;font-weight:500;z-index:999;opacity:0;transition:opacity .3s;pointer-events:none;border:1px solid var(--border);white-space:nowrap}
+.toast.show{opacity:1}
+/* SCROLLBAR */
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
+body{padding-bottom:70px}
+@media(min-width:600px){.quick-info{grid-template-columns:1fr 1fr 1fr}.dash-grid{grid-template-columns:1fr 1fr}}
+</style>
+</head>
+<body>
+<div class="bg-grid"></div>
+
+<!-- LOGIN -->
+<div class="login-screen" id="loginScreen">
+<div class="login-card">
+<div class="login-logo"><img src="data:image/jpeg;base64,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" alt="KODABIZ"></div>
+<div class="login-title">KODABIZ 기업 DB</div>
+<div class="login-sub">2021-2022 회원사 기업정보 조회 시스템</div>
+<input type="password" class="login-input" id="pwInput" placeholder="비밀번호를 입력하세요" autocomplete="off">
+<button class="login-btn" onclick="tryLogin()">로그인</button>
+<div class="login-error" id="loginErr">비밀번호가 올바르지 않습니다</div>
+</div>
+</div>
+
+<!-- APP -->
+<div class="app" id="app">
+<div class="container">
+<div class="header">
+<img src="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/4gHYSUNDX1BST0ZJTEUAAQEAAAHIAAAAAAQwAABtbnRyUkdCIFhZWiAH4AABAAEAAAAAAABhY3NwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAA9tYAAQAAAADTLQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAlkZXNjAAAA8AAAACRyWFlaAAABFAAAABRnWFlaAAABKAAAABRiWFlaAAABPAAAABR3dHB0AAABUAAAABRyVFJDAAABZAAAAChnVFJDAAABZAAAAChiVFJDAAABZAAAAChjcHJ0AAABjAAAADxtbHVjAAAAAAAAAAEAAAAMZW5VUwAAAAgAAAAcAHMAUgBHAEJYWVogAAAAAAAAb6IAADj1AAADkFhZWiAAAAAAAABimQAAt4UAABjaWFlaIAAAAAAAACSgAAAPhAAAts9YWVogAAAAAAAA9tYAAQAAAADTLXBhcmEAAAAAAAQAAAACZmYAAPKnAAANWQAAE9AAAApbAAAAAAAAAABtbHVjAAAAAAAAAAEAAAAMZW5VUwAAACAAAAAcAEcAbwBvAGcAbABlACAASQBuAGMALgAgADIAMAAxADb/2wBDAAUDBAQEAwUEBAQFBQUGBwwIBwcHBw8LCwkMEQ8SEhEPERETFhwXExQaFRERGCEYGh0dHx8fExciJCIeJBweHx7/2wBDAQUFBQcGBw4ICA4eFBEUHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh7/wAARCAAwAMsDASIAAhEBAxEB/8QAGwAAAwEBAQEBAAAAAAAAAAAAAAcIBgUEAwL/xABSEAABAgUCAgUFCAwKCwAAAAABAgMABAUGEQcSITEIExRBUSIyYXGBFRcYVoKRodMWIzNCU2KSlKKlsdIkNzhSVXV2pMHCJTVUcnOTo7O00fH/xAAbAQACAwEBAQAAAAAAAAAAAAADBAACBQYBB//EADIRAAIBAwEHAgIKAwAAAAAAAAECAwAEESEFEjFBUWHwE3EVoQYUIiMygZGxwfFCYuH/2gAMAwEAAhEDEQA/AKrgggiVKIIlGo6yX8zrg/bDdaxTEXGZENdlY+49o2bd3V7vN4Zzn0xV0MXFq8G7vc6DDOsud3lRBGFvjVuwbPU4zVK6y9ON5BlJT7c8CO4hPBJ/3iIS11dKVx/ezb1uzEsn72YfmUbz60dWoD54vDYzzaqulVkuoo/xGqjgiIHukNqYp/e3XOrbz5nZJc/T1UbjT/pOTLM41LXhT35mXWQlc2ytG5r09WltO4e3Prhh9k3CjOh9qCu0IWOOFVPBHiodVptcpMvVaROMzklMo3tPNHKVD/A9xB4g8DEo6o636g0LUSvUenVnqpSTnnGWUdmYO1IOAMlsk+0wtb2klwxVeI60ea4SFQzc6ruCIklOkTqO2+lcxVuvbB4o7PLpz7Q1D20X14ol7TjdCqrCqRWFjDPWvJW3NHwSoJThf4uOPcTygs2zZ4V3iMjtQ4r6KQ7oOPenLBBCO6Q+tf2EzybaoKC7WC2HZh4LTtlgfNSUqSoKURxxwwMeMKwQPO+4g1o8sqxLvNTxgiWNKOkhPCtNSF8qW/KTKwjtqQ2gS2TwKkIQnKfE54DuMNjpGXDdlsWMzclpzoaRLPpE5tabcy0vglWVpUMBWBw/neiDvYyxyiNtM8OlCW6jdC68qZ8ERF8IfUv+mv7rL/VQfCH1K/pr+6y/1UM/B7jqPPyoHxKHvVuwRPmh/SBYuCqy1t3W2uXnplQRLTxWjq3XDyQpKUp2EnkeOSccI73Slvq5LGolFmrcn+xuzUy426epbXuSEggeWlWPZCpspRMISME/pTAuozGZBwFOWCFboNeFdujSKYuKtzfap9t2YAc6tCOCEgpGEpA+iEJ8JG+Pwn6LP1UXj2fLIzKuPs1V7yNFVjzqzYIjL4SN8fhP0WfqoPhI3x+E/RZ+qg3wi47frQviMPerNghV9Hi5b0vGhzFxXIeqpzp6uRbUhAU6QfKc8lCfJz5I55OeWOLUjPljMTlDxFORuJFDCiCCCB1eoAvqpCj691erlkvCRuV6ZLYVt37Jkq2544zjnHUv3XO/7sDssan7kyCyf4NIZbynwUvz1cOfEA+EZvV4FWrN2gAkmtTYAH/GVHvv/S26LJtmj12tMJQzUgQpCclUsvGUoc8FFPH2Ed0diFhIjL4zjTNc2WkG+F4c662luid4X0lqfLQpNHWQrt02k/bE+LaOa/XwT6YddB0U0nor7Eq+zVLimlKCSp2YLbZUT4I28PaY03Rv1ERfdidgm3EJrdLbDEykcOtRjCHQPSBg+kHkCI9FruoZr0oXfJAXtOe4kED6THAfSr6Q7QsrmKCMhAzYJ6DI1+ddLsbZ9lMrF9TgkdyOVc+pUDSalKelGLGpDwYzvU5LBXAKCSQTknyjjPoPhxyl7aVWDc1Dnm7YpiqNWpRLjjQaKlNulHnowT4EY5cCMd4GmqEtPSTTzDyqpLlqW6spH21IIeTyOQCSMH1GOtbofZrS56ZM+ZWUededceVsQ2hDagTtOcgk44HuPhHemBIYvURiSM8+OPlr/VfNo9q3dxdCORQASNN3G7nP56dx76ZpOdEu5Kxb2osxYFQdJkp1DjjbR4hD6E7t6T4KQk58cJ8I9l639ZCNWahb8/pPRp+ZVVeyuzzkx5bqisJLhT1Z48c4z7Y+Ni0xU1rraVRlUbFB2YDpHcgMrUP8R7YXeoX8o6o/2iH/AHhA57VBeMP9c9P2rorG8aayR++PM1W0/o7plOSy5d2zqYhKh5zKS0sepSSCIl/pF6WN6a1iRqVCmX10meUrqesVlyWdTg7dwxkccpPPgc8sm24nvpwz0siyqFTVKT2p6ol9A79iG1JV9LiYyNnXMvrquSQa172CP0i2MEVuOj3fj14aWIq9YeBnactctPPHhv2JCg4fWhSc+nMSpZkkvVLXJhFUDi2qtUXJmaAOCGhucUkHuG1O0eHCNzpbVX7b6LN7VIKKFT08ZKXz98XG20KI9SVKPyY9PQjoaZu8K1cDiciQlEsN57luqJyPktkfKh5UFsJ5F9h57mlmYzGJD7muH0s7HpNn3fTJmg09uQp9QlD9pb8wOtnCseGUqR7cnvig9Ap2XvPQqky9aZbnm+zrkJlp0bkrS2ooSD4+QExnemZQhUdMGKwhGXaTOoWVeDbnkKH5Rb+aOR0IK32i1K5b61DdJzaJlAPPa6naR7C3+lC8rGawV+anz+KKiiK7K8iK387YmjElMrlpyi2rLPoxubdW2hScjIyCcjgQY+Js/Q7H+rrQ/wCc1+9Cq1z0Uvu7dUqxcFGlZJcjNdT1SnJpKFHayhByDy4pMYj4OOp/+w078+TEjijZATPgnv8A9qPI4YgRZrEamtUCS1Gq7VnPFVIZmsSa0LKgMAZ2K5lIVu2nwA4mH900y+qyLSVMjD5fWXeH33Vpz9MT5Sg9ZOokr9kVHDztJn0GbknuStigSOBwfEHiDw5jnRHTecQ9adsPNq3IXNOKSfEFsEQ/NpcQDjx166UpHrDKeHDT860/RBabe0UDLqQptyemEqSe8HaCI1HvMaX/ABOkPyl/vRmuh3/E23/WD/8Alhr16qyNDos5WKk8GJOTZU88s9yUjJ4d58B3xh3Mki3DhCRk8q1IERoVLDlSQ11tfSnT6xZiot2lTPdWZyzTmlFZ3OnmojdxSkcT3ch3iEFoPYC9Q77ap0wHUUuWT2ifdRwwgckA9xUeHqye6PzqBdVw6u6jM9UypSph4StLkgeDSCryQe7J5qV+wAAWTpDYFM08tJqkSQDs25hyemscX3ccT6EjkB3D0kk6kkrWVvus2Xb5efvSKRrdTZUYUfOtXTpOVp0hLyEiwiXlZdtLTLSBhKEJGAB6gI+8EEc8da2KIIIIlSoPrH8puZ/tgf8Ay4ti8rcpd2W1OUCsM9bJzaNqscFII4pUk9ygQCPVGbe0f05eudVyuW7uqypztqpjtswMvb9+/bv2+dxxjHojeRoXl2s24UyCopS3tzHvBtc1AlEqNwaN6tOBQWmYp0wWJpvGEzMuSCeHgpOFA9x2nuis61JS0/JMXPQXRNUyebEwlbf3oVxz6B+w5Edi9dMbFvOpt1O5KCidnG2g0l0TDrR2AkgHq1JzzPOOzaVtUW1KIii0GUXK09tSlIZU+46ElRycFalEDPHGcZJ8YQ29BbbYt1VwQ4515bW7wsRn7PLrWLbuFTgT7oyErPKSAA4obV8PEjnzPzmMnfN4vTkouhUthiWaeID6ZdPFfgknmTnn/wDYb0/a1BngoTFPThfnBtxbefySI+dFs+2qNMCYp1JZaeHFLiipxSfUVE49kJ7Bhns3372YuF/Co4dixOunTX35UntGxnuBuQ7q73Fv8sdBp/NZLR+x3KR/p6rMlE+4goYaVzZQcZJ8FHHsHrOJN1cnFU/XWvz6UBxUtWlvBJOAopczj6IvyF9XdFtM63WJur1S2u0Ts26XX3e3TCd6yck4S4APYI6KHaeZ2mm1yMaVZdmLDbrBDwHWkbP9Km5HJZSJK2KVLvHkt11xwD5I2/the02UvrXC/8F95U3MkJD0wpO1iTZz4Dgkc8AcVHPM5MVQ3oJpMhYWm0k5ByMz8yR8xcjeW/QqNb0gJCh0uUp0sDnq5doIBPiccz6Txi31+2hBNumD1P9mifVJpD962lTJ0p5KQsjTu0NPKNu7Ilx2aeUrz3FIAG9XpUpxZ9g8BGI0U1jVpnRp+QYtxupOTkwHlvKmy1gBIATjaeXlHOe+K2vjTay72nmJ256MZ9+Xa6ppXanmwlOScYQsDmefOM97wOknxT/AFjNfWRIr639D05QTzPvn3qSWk3q78ZA6eYrMWdqCnXKybytt+iIpswiQHUITMdb1ilBe1XmjG1aUfPCf6IVcVSNXmqctW1qqyzssoHlvSOsSfX5BHyoqayNNLJsqovVC2KKZCZfa6lxfa3nApGQcYWsjmBxxmPDTdHNOKbcLNfkbc6ipMzHaW3kzsx5Lmc529ZtxnuxjuxiBi8t1WSNQd1uHY/rVzbysUckZHHzFLrVzpA1WyNQqnbEtbslONSfVbXnH1JUre0hfEAfjY9kZP4Vlc+KVO/OV/8AqHpdOkOnd0V6Zrldt7tdQmdvXPdsfRu2pCR5KVgDgkDgO6OX7wWkvxT/AFhNfWRI57EIA6HPPzNePFdliVcY87VJCEXHq7qipaWELqdXmAp0tIIbYbACdx8EpSBxPHh3kw9emywiVs61ZZvOxqZcbTnngNpAh42bZdrWdLLl7aosrTkufdFIBU4vHIKWolSh6zHzvmx7XveVlpa6KX7oNSqytlPXuNbVEYJ8hSc8PGLPtFGnRgMKteLZMImUnLNS+6Hf8Tbf9YP/AOWFf0sdVF1aovWJQpge5sqsCouoP3d5Jz1YP81BAz4qHo40zaVqUC1KEaHb8iqRkCtS+qS+4ohSuZClKKh8/CMarQPSZSipVqEknJJqM1k/9WBxXMAuGmcE9PM1eSCUwiNSO9STpDfMlYFfXXV249WJ9KCiVW7MltMvkEKIAScqIOM9wz4w3fhXVD4ly35+r9yGx7wOknxT/WM19ZB7wOknxT/WM19ZDMt7YzNvOhJ870GO2uoxuqwA87UaEak1rUqWqFQmbcZpdOlVBpt5MyXC87zKQCkcAMZP4w9MM6OZa9Ao9sUNii0KSRJSEvnq2kqUrGSSSSokkkk8STHTjImZGclBgVoxqyqAxya//9k=" class="header-logo" alt="KODABIZ">
+<h1>KODABIZ 기업정보 DB</h1>
+<div class="subtitle">2021-2022 회원사 기업 데이터베이스</div>
+<div class="stats-row">
+<div class="stat-item"><div class="stat-num" id="sCnt">0</div><div class="stat-label">등록기업</div></div>
+<div class="stat-item"><div class="stat-num" id="sReg">0</div><div class="stat-label">지역</div></div>
+<div class="stat-item"><div class="stat-num" id="sCat">0</div><div class="stat-label">품목군</div></div>
+</div>
+</div>
+
+<!-- TAB BAR -->
+<div class="tab-bar" id="tabBar">
+<button class="tab-btn active" data-tab="search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>검색</button>
+<button class="tab-btn" data-tab="filter"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M7 12h10M10 18h4"/></svg>필터</button>
+<button class="tab-btn" data-tab="dash"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>대시보드</button>
+<button class="tab-btn" data-tab="fav"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>즐겨찾기</button>
+</div>
+
+<!-- SEARCH TAB -->
+<div class="tab-content active" id="t_search">
+<div class="search-section">
+<div class="search-wrap">
+<div class="search-box">
+<div class="search-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg></div>
+<input type="text" id="searchInput" placeholder="기업명을 검색하세요" autocomplete="off">
+<button class="clr-btn" id="clrBtn">&times;</button>
+</div>
+<div class="autocomplete" id="acList"></div>
+</div>
+</div>
+<div class="ac-overlay" id="acOverlay"></div>
+<div id="emptyState" class="empty-state">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+<p>기업명을 입력하여 검색하세요</p>
+</div>
+<div class="result" id="result"></div>
+</div>
+
+<!-- FILTER TAB -->
+<div class="tab-content" id="t_filter">
+<div class="filter-bar">
+<select class="filter-select" id="fRegion" onchange="renderFilter()"><option value="">전체 지역</option></select>
+<select class="filter-select" id="fYear" onchange="renderFilter()"><option value="">전체 연도</option></select>
+<button class="export-btn" onclick="exportCSV()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>CSV</button>
+</div>
+<div class="filter-results" id="fResults"></div>
+<div class="ftable-wrap">
+<table class="ftable" id="fTable"><thead><tr><th>기업명</th><th>대표자</th><th>대표품목</th><th>소재지</th><th>선정년도</th><th>사무실</th><th>담당자</th></tr></thead><tbody id="fBody"></tbody></table>
+</div>
+</div>
+
+<!-- DASHBOARD TAB -->
+<div class="tab-content" id="t_dash">
+<div class="dash-grid" id="dashGrid"></div>
+</div>
+
+<!-- FAVORITES TAB -->
+<div class="tab-content" id="t_fav">
+<div class="fav-list" id="favList"></div>
+<div id="favEmpty" class="empty-state" style="display:none">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+<p>즐겨찾기한 기업이 없습니다</p>
+</div>
+</div>
+</div>
+</div>
+
+<!-- BOTTOM NAV -->
+<div class="bottom-nav" id="bottomNav">
+<button class="bnav-btn active" data-tab="search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>검색</button>
+<button class="bnav-btn" data-tab="filter"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M7 12h10M10 18h4"/></svg>필터</button>
+<button class="bnav-btn" data-tab="dash"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>대시보드</button>
+<button class="bnav-btn" data-tab="fav"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>즐겨찾기</button>
+</div>
+
+<!-- BACK TO TOP -->
+<button class="back-top" id="backTop"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="18 15 12 9 6 15"/></svg></button>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+var PW='1234';
+var ORIG=[{"n":"㈜로드인터내셔날","ceo":"홍성훈","cat":"","prod":"철강 및 건설 장비","loc":"서울특별시","year":"2021","off":"02-563-6161","fax":"02-563-6162","mgr":"차민경 과장","ph":"010-2207-7640","em":"mincha@rico21.com","hp":"www.rico21.com","adr":"서울특별시강남구 밤고개로1길 10, 15층 1528호","cn":"태국, 호주, CIS","inn":"-","ven":"-","wom":"-","dis":"-","soc":"-","e21":"","e22":"","e23":"","e24":"","e25":"","e26":"","gpass":"","mem":"","un":"","assoc":"","tech":"-","vend":"","consult":""},{"n":"메디아나","ceo":"길문종","cat":"","prod":"환자감시장치, 제세동기, 체성분 분석기 등","loc":"강원도","year":"2021","off":"033-742-5400","fax":"033-742-5483","mgr":"주형우 사원","ph":"010-6266-6522","em":"howard@mediana.co.kr","hp":"www.mediana.co.kr","adr":"강원도 원주시 문막읍 동화공단로 132","cn":"영국, 이탈리아, 중국, 태국, 인도, 러시아, 우크라이나, 미국, 멕시코, 페루, 남아공 등","inn":"-","ven":"-","wom":"-","dis":"-","soc":"-","e21":"","e22":"","e23":"","e24":"","e25":"","e26":"","gpass":"","mem":"","un":"","assoc":"","tech":"CE, ISO13485, FDA","vend":"","consult":""},{"n":"㈜비스토스","ceo":"이후정","cat":"","prod":"환자감시장치, 태아감시장치","loc":"성남시","year":"2021","off":"031-750-0340","fax":"031-750-0344","mgr":"김나현 사원","ph":"010-8341-6008","em":"bright@bistos.co.kr","hp":"www.bistos.co.kr","adr":"경기도 용인시 처인구 포곡읍 금어로 522","cn":"미국, 인도네시아, 폴란드, 페루, 이집트 등","inn":"-","ven":"-","wom":"-","dis":"-","soc":"-","e21":"","e22":"","e23":"","e24":"","e25":"","e26":"","gpass":"","mem":"","un":"","assoc":"","tech":"ISO 13485, CE, FDA, SFDA, Secretaria de Salud, RoHS, 국제특허","vend":"","consult":""},{"n":"㈜에이팩","ceo":"송규섭","cat":"","prod":"LED 조명","loc":"대전시","year":"2021","off":"042-864-0815","fax":"042-862-9815","mgr":"현영수 이사","ph":"010-8972-2907","em":"ys.hyun@apack.net","hp":"www.apack.net","adr":"대전시 유성구 대덕대로 838","cn":"미국，독일，일본，베트남，인도네시아","inn":"-","ven":"-","wom":"-","dis":"-","soc":"-","e21":"","e22":"","e23":"","e24":"","e25":"","e26":"","gpass":"","mem":"","un":"","assoc":"","tech":"UL, ETL, CE","vend":"","consult":""},{"n":"우선이엔씨㈜","ceo":"김광수","cat":"","prod":"전기공사업, 통신공사업","loc":"서울특별시","year":"2021","off":"02-419-8104","fax":"02-419-8106","mgr":"엄주명 전무","ph":"010-9656-0006","em":"jm.eom@woosunenc.com","hp":"www.woosun.co.kr","adr":"서울특별시 송파구 백제고분로 75","cn":"인도, 네팔, 베트남, 미얀마, 부탄, 방글라데시","inn":"-","ven":"-","wom":"-","dis":"-","soc":"-","e21":"","e22":"","e23":"","e24":"","e25":"","e26":"","gpass":"","mem":"","un":"","assoc":"","tech":"-","vend":"","consult":""},{"n":"이앤에이치㈜","ceo":"박대전","cat":"","prod":"태양광 발전장치, 전기에너지 저장장치","loc":"서울특별시","year":"2021","off":"02-323-3385","fax":"02-323-7785","mgr":"김선중 부장","ph":"010-2032-0785","em":"nmlmman78@gmail.com","hp":"www.eandh.co.kr","adr":"서울특별시 성동구 성수이로 7길 27","cn":"일본, 인도네시아, 남아공 외","inn":"-","ven":"-","wom":"-","dis":"-","soc":"-","e21":"","e22":"","e23":"","e24":"","e25":"","e26":"","gpass":"","mem":"","un":"","assoc":"","tech":"-","vend":"","consult":""},{"n":"희성폴리머㈜","ceo":"권영락","cat":"","prod":"산업용 원단, 연포장, 조립식 구조물","loc":"서울특별시","year":"2021","off":"02-6960-0900","fax":"02-6960-0999","mgr":"이원준 사원","ph":"010-8889-1064","em":"216wj@hspd.co.kr","hp":"www.hspd.co.kr","adr":"서울특별시 종로구 청계천로 41","cn":"미국，사우디，러시아 등","inn":"-","ven":"-","wom":"-","dis":"-","soc":"-","e21":"","e22":"","e23":"","e24":"","e25":"","e26":"","gpass":"","mem":"","un":"","assoc":"","tech":"상표권(ECM, UNIFLEX, ECM)","vend":"","consult":""},{"n":"㈜대원지에스아이","ceo":"서보성","cat":"","prod":"색채선별기, 곡물/식품 및 재활용 가공기계","loc":"경상도","year":"2021","off":"054-973-2221","fax":"054-973-2230","mgr":"장우석 차장","ph":"010-6389-2295","em":"traderu@daewon.com","hp":"www.daewon.com","adr":"경상북도 칠곡군 왜관음 아곡 6길 42","cn":"인도, 러시아, 태국 등","inn":"-","ven":"-","wom":"-","dis":"-","soc":"-","e21":"","e22":"","e23":"","e24":"","e25":"","e26":"","gpass":"","mem":"","un":"","assoc":"","tech":"CE, ISO9001, EAC","vend":"","consult":""},{"n":"동우옵트론㈜","ceo":"김영준","cat":"","prod":"연소가스분석기기, 광학기기","loc":"경기도","year":"2021","off":"031-765-0300","fax":"031-765-0222","mgr":"김석 차장","ph":"010-7141-2284","em":"os@optron.co.kr","hp":"www.optron.co.kr","adr":"경기도 광주시 오포음 회안대로 102-8","cn":"인도，터키, 파키스탄，중국, 핀란드","inn":"-","ven":"-","wom":"-","dis":"-","soc":"-","e21":"","e22":"","e23":"","e24":"","e25":"","e26":"","gpass":"","mem":"","un":"","assoc":"","tech":"CE, CB, ISO 9001, ISO 14001, TUV, CCEP, CPA","vend":"","consult":""},{"n":"아쿠아인터내셔날","ceo":"윤덕현","cat":"","prod":"프로젝트사업, 컨설팅서비스","loc":"부산시","year":"2021","off":"-","fax":"-","mgr":"-","ph":"-","em":"-","hp":"-","adr":"부산시 해운대구 센텀중앙로 48","cn":"-","inn":"-","ven":"-","wom":"-","dis":"-","soc":"-","e21":"-","e22":"-","e23":"-","e24":"-","e25":"","e26":"","gpass":"","mem":"","un":"","assoc":"","tech":"-","vend":"","consult":""},{"n":"㈜웃샘","ceo":"이명식","cat":"","prod":"음압캐리어","loc":"충청도","year":"2021","off":"043-236-0270","fax":"043-236-0275","mgr":"유차열 부장","ph":"010-5638-0275","em":"cyu@wosem.co.kr","hp":"www.wosem.co.kr","adr":"충청북도 청주시 흥덕구 오송읍 오송생명ㄹ고5로 179","cn":"인도, 캄보디아 등","inn":"-","ven":"-","wom":"-","dis":"-","soc":"-","e21":"","e22":"","e23":"","e24":"","e25":"","e26":"","gpass":"","mem":"","un":"","assoc":"","tech":"CE, EN ISO 13485","vend":"","consult":""},{"n":"지에스아이엘","ceo":"이정우","cat":"","prod":"응용 소프트웨어 개발 및 공급업","loc":"경기도","year":"2021","off":"02-6247-7500","fax":"02-6937-0046","mgr":"이정우 대표","ph":"010-4034-5537","em":"elisha.lee@gsil.kr","hp":"www.gsil.kr","adr":"경기도 성남시 분당구 판교로289번길 20","cn":"쿠웨이트","inn":"-","ven":"-","wom":"-","dis":"-","soc":"-","e21":"","e22":"","e23":"","e24":"","e25":"","e26":"","gpass":"","mem":"","un":"","assoc":"","tech":"PCT","vend":"","consult":""},{"n":"㈜프로테옴텍","ceo":"임국진","cat":"","prod":"알러지 진단키트","loc":"서울특별시","year":"2021","off":"02-6968-5277","fax":"010-3115-5640","mgr":"남궁찬 대리","ph":"010-3115-5640","em":"cnamkung@proteometech.com","hp":"www.proteometech.com","adr":"서울특별시 강서구 양천로 401","cn":"인도, 베트남, 러시아, 아프가니스탄, 홍콩 등","inn":"-","ven":"-","wom":"-","dis":"-","soc":"-","e21":"","e22":"","e23":"","e24":"","e25":"","e26":"","gpass":"","mem":"","un":"","assoc":"","tech":"CE, P3H, MP","vend":"","consult":""},{"n":"에스디바이오센서㈜","ceo":"이효근","cat":"","prod":"코로나 바이러스 진단 키트","loc":"경기도","year":"2021, 2022","off":"031-300-0400","fax":"031-300-0499","mgr":"조성호 팀장","ph":"010-3319-2038","em":"cedric@sdbiosensor.com","hp":"www.sdbiosensor.co.kr","adr":"경기도 수원시 영통구 덕영대로 1556번길 16","cn":"유럽, 아시아, 아프리카, 중남미 등 전세계","inn":"-","ven":"-","wom":"-","dis":"-","soc":"-","e21":"","e22":"","e23":"","e24":"","e25":"","e26":"","gpass":"","mem":"","un":"","assoc":"","tech":"TGA, CE, Health Canada","vend":"","consult":""},{"n":"㈜티지","ceo":"전원영","cat":"","prod":"전자정부, 스마트시티, 인공지능, IT 솔루션","loc":"경기도","year":"2021, 2022","off":"070-7734-3532","fax":"070-4275-0037","mgr":"이소희 선임","ph":"010-6664-0034","em":"shlee@tgin.kr","hp":"www.tgin.kr","adr":"인천시 연수구 송도문화로 119","cn":"튀니지, 케냐, 보츠와나, 우즈베키스탄, 카타르, 카자흐스탄, 말레이시아, 몽골, 마다가스카르, 파라과이, 페루","inn":"-","ven":"-","wom":"-","dis":"-","soc":"-","e21":"","e22":"","e23":"","e24":"","e25":"","e26":"","gpass":"","mem":"","un":"","assoc":"","tech":"-","vend":"","consult":""},{"n":"그리드위즈","ceo":"김구환","cat":"전기전자","prod":"전기자 충전모뎀, 충전장치","loc":"경기도","year":"2022","off":"031-698-3380","fax":"031-624-3380","mgr":"이충민 매니저","ph":"010-5358-6982","em":"bobby@gridwiz.com","hp":"www.gridwiz.com","adr":"경기도 성남시 분당구 산운로208번길 25","cn":"미국, 중국, 독일 등","inn":"-","ven":"-","wom":"-","dis":"-","soc":"-","e21":"","e22":"","e23":"","e24":"","e25":"","e26":"","gpass":"","mem":"","un":"","assoc":"","tech":"OPENADR, CE, EMC, OPCC, CE-RoHS, ISO 9001, ISO 14001","vend":"","consult":""},{"n":"㈜누리온","ceo":"오진탁","cat":"전기전자","prod":"LED 조명/사인모듈, 조명제어시스템","loc":"경기도","year":"2022","off":"1877-7722","fax":"0505-312-1800","mgr":"김병국 이사","ph":"010-5324-3485","em":"boris@nuri-on.com","hp":"www.nuri-on.com","adr":"경기도 안산시 상록구 팔곡두레길 111","cn":"미국,캐나다,일본,독일,이태리,프랑스,스페인,스웨텐,호주,베트남 등","inn":"-","ven":"-","wom":"-","dis":"-","soc":"-","e21":"","e22":"","e23":"","e24":"","e25":"","e26":"","gpass":"","mem":"","un":"","assoc":"","tech":"UL, CE","vend":"","consult":""},{"n":"㈜비에이에너지","ceo":"강태영","cat":"전기전자","prod":"에너지저장장치(ESS), 배터리안전시스템","loc":"광주시","year":"2022","off":"062-571-1062","fax":"062-571-3068","mgr":"유수훈 대리","ph":"010-2567-1528","em":"yoosuhun@baenergy.net","hp":"www.baenergy.co.kr","adr":"광주광역시 북구 첨단연신로 12","cn":"미국, 호주, 중동","inn":"-","ven":"-","wom":"-","dis":"-","soc":"-","e21":"","e22":"","e23":"","e24":"","e25":"","e26":"","gpass":"","mem":"","un":"","assoc":"","tech":"USPTO","vend":"","consult":""},{"n":"㈜삼진정밀","ceo":"정태희","cat":"기계장치","prod":"산업용, 상하수도용 밸브류, 수처리 기자재","loc":"대전시","year":"2022","off":"042-672-3600","fax":"042-626-3142","mgr":"이규빈 대리","ph":"010-4440-9894","em":"kblee@sjv.co.kr","hp":"www.samjinvalve.com","adr":"대전시 대덕구 대화로 132번길 22","cn":"베트남,필리핀,말레이시아 등","inn":"-","ven":"-","wom":"-","dis":"-","soc":"-","e21":"","e22":"","e23":"","e24":"","e25":"","e26":"","gpass":"","mem":"","un":"","assoc":"","tech":"TR-CU, ISO 9001","vend":"","consult":""},{"n":"LS전선","ceo":"구본규","cat":"전기전자","prod":"피복절연선, 통신 및 광케이블","loc":"경기도","year":"2022","off":"02-2189-9114","fax":"02-2139-1135","mgr":"반재봉 대리","ph":"010-9111-7541","em":"jbban@lscns.com","hp":"www.lscns.co.kr","adr":"경기도 안양시 동안구 엘에스로 127","cn":"필리핀, 인도네시아, 네팔 등","inn":"-","ven":"-","wom":"-","dis":"-","soc":"-","e21":"","e22":"","e23":"","e24":"","e25":"","e26":"","gpass":"","mem":"","un":"","assoc":"","tech":"한국표준협회 제품인증서(5건), ISO 45001, ISO/IEC 27001","vend":"","consult":""},{"n":"㈜영일교육시스템","ceo":"박영종","cat":"사무기기","prod":"자동차 교육용 훈련장비","loc":"서울특별시","year":"2022","off":"1670-3463","fax":"031-840-5832","mgr":"현민지 과장","ph":"010-4245-7271","em":"mjhyun@yes01.co.kr","hp":"www.yes01.co.kr","adr":"서울시 광진구 광나루로56길 85","cn":"에콰도르, 모로코, 파라과이 등","inn":"-","ven":"-","wom":"-","dis":"-","soc":"-","e21":"","e22":"","e23":"","e24":"","e25":"","e26":"","gpass":"","mem":"","un":"","assoc":"","tech":"-","vend":"","consult":""},{"n":"엔에이치네트웍스㈜","ceo":"이근신","cat":"","prod":"CCTV 카메라","loc":"전라도","year":"2022","off":"062-719-1080","fax":"062-719-1085","mgr":"허중빈 부사장","ph":"010-3659-2980","em":"hjb@nhss.co.kr","hp":"www.nhss.co.kr","adr":"전라북도 군산시 산단남북로 169","cn":"멕시코, 베트남","inn":"-","ven":"-","wom":"-","dis":"-","soc":"-","e21":"","e22":"","e23":"","e24":"","e25":"","e26":"","gpass":"","mem":"","un":"","assoc":"","tech":"-","vend":"","consult":""},{"n":"㈜플랫폼베이스","ceo":"김범수","cat":"","prod":"디지털 락, 스마트키","loc":"경기도","year":"2022","off":"031-5182-8255","fax":"031-5182-8256","mgr":"김영태 과장","ph":"010-8507-1510","em":"yongtae.kim@platformbase.co.kr","hp":"www.platformbase.co.kr","adr":"경기도 수원시 권선구 산업로 156번길 142-10","cn":"영국, 그리스","inn":"-","ven":"-","wom":"-","dis":"-","soc":"-","e21":"","e22":"","e23":"","e24":"","e25":"","e26":"","gpass":"","mem":"","un":"","assoc":"","tech":"SRRC,CE,특허,디자인,상표","vend":"","consult":""},{"n":"㈜피디소프트","ceo":"조현종","cat":"","prod":"시스템 통합 및 포털 CMS 구축 서비스","loc":"서울특별시","year":"2022","off":"02-1661-9829","fax":"02-811-3666","mgr":"이주현 부장","ph":"010-6555-8761","em":"ljh@pdsoft.co.kr","hp":"www.pdsoft.co.kr","adr":"서울특별시 금천구 가산디지털1로 128","cn":"베트남，필리핀, 인도네시아","inn":"-","ven":"-","wom":"-","dis":"-","soc":"-","e21":"","e22":"","e23":"","e24":"","e25":"","e26":"","gpass":"","mem":"","un":"","assoc":"","tech":"-","vend":"","consult":""},{"n":"타임교육C&P","ceo":"이길호","cat":"","prod":"수학, 과학 학습용 교구 및 교재","loc":"서울특별시","year":"2022","off":"1666-1113","fax":"02-395-0251","mgr":"백성민 차장","ph":"010-8792-5811","em":"sungmin.baek@time.com","hp":"www.timecnp.com","adr":"서울특별시 강남구 봉은사로 442","cn":"대만","inn":"-","ven":"-","wom":"-","dis":"-","soc":"-","e21":"","e22":"","e23":"","e24":"","e25":"","e26":"","gpass":"","mem":"","un":"","assoc":"","tech":"중국 상표권, 말레이시아 상표권, 플레이팩토(싱가폴, 베트남, 인도네시아, 태국)","vend":"","consult":""},{"n":"주식회사 루닛","ceo":"서범석","cat":"","prod":"인공지능 영상판독 보조 시스템","loc":"서울특별시","year":"2022","off":"02-2138-0827","fax":"-","mgr":"황재윤 매니저","ph":"010-3900-3199","em":"jyh@lunit.io","hp":"www.lunit.io","adr":"서울특별시 강남구 테헤란로 27길","cn":"유럽, 호주, 태국, UAE 등","inn":"-","ven":"-","wom":"-","dis":"-","soc":"-","e21":"","e22":"","e23":"","e24":"","e25":"","e26":"","gpass":"","mem":"","un":"","assoc":"","tech":"CE, ISO 13485, QSD 12854","vend":"","consult":""},{"n":"㈜스텍","ceo":"이창석","cat":"","prod":"열차단 필름, 차량도장보호 필름, 방역물품","loc":"서울특별시","year":"2022","off":"02-6235-7835","fax":"010-9122-0971","mgr":"최진우 프로","ph":"070-7610-7581","em":"james@stek.kr","hp":"www.stekautomotive.com","adr":"서울시 구로구 디지털로 243","cn":"미국, 캐나다, 호주, 일본, 중국, 사우디 아라비아, 브라질 등","inn":"-","ven":"-","wom":"-","dis":"-","soc":"-","e21":"","e22":"","e23":"","e24":"","e25":"","e26":"","gpass":"","mem":"","un":"","assoc":"","tech":"FDA, CE","vend":"","consult":""},{"n":"한국조명 주식회사","ceo":"이동우","cat":"","prod":"LED 조명","loc":"경기도","year":"2022","off":"1599-9754","fax":"0303-3130-7701","mgr":"이동우 대표","ph":"010-9917-7700","em":"dwlee@korealighting.kr","hp":"www.korealighting.kr","adr":"인천광역시 남동구 호구포로 139","cn":"미국 일본 베트남 유럽","inn":"-","ven":"-","wom":"-","dis":"-","soc":"-","e21":"","e22":"","e23":"","e24":"","e25":"","e26":"","gpass":"","mem":"","un":"","assoc":"","tech":"UL, CB","vend":"","consult":""}];
+
+var DB=ORIG,filtered=[],filteredList=[],acIdx=-1;
+var input=document.getElementById('searchInput'),ac=document.getElementById('acList'),clrBtn=document.getElementById('clrBtn'),acOv=document.getElementById('acOverlay'),backTop=document.getElementById('backTop'),pwI=document.getElementById('pwInput'),loginErr=document.getElementById('loginErr');
+
+function getFavs(){try{return JSON.parse(localStorage.getItem('kodabiz_favs')||'[]');}catch(e){return[];}}
+function setFavs(f){localStorage.setItem('kodabiz_favs',JSON.stringify(f));}
+function isFav(n){return getFavs().indexOf(String(n))!==-1;}
+function toggleFav(n){n=String(n);var f=getFavs();var i=f.indexOf(n);var adding=(i===-1);if(adding)f.push(n);else f.splice(i,1);setFavs(f);var b=document.getElementById('favBtn');if(b){if(adding)b.classList.add('on');else b.classList.remove('on');}showToast(adding?'즐겨찾기에 추가되었습니다':'즐겨찾기에서 삭제되었습니다');}
+
+function esc(s){if(!s)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function norm(s){return s.replace(/[\s㈜()（）주식회사]/g,'').toLowerCase();}
+function showToast(msg){var t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(function(){t.classList.remove('show');},2000);}
+
+function tryLogin(){if(pwI.value===PW){document.getElementById('loginScreen').classList.add('hidden');document.getElementById('app').classList.add('show');initApp();}else{loginErr.classList.add('show');pwI.value='';pwI.focus();setTimeout(function(){loginErr.classList.remove('show');},2000);}}
+pwI.addEventListener('keydown',function(e){if(e.key==='Enter')tryLogin();});
+
+function refreshStats(){document.getElementById('sCnt').textContent=DB.length;var rs={},cs={};for(var i=0;i<DB.length;i++){if(DB[i].loc)rs[DB[i].loc]=1;if(DB[i].cat&&DB[i].cat!=='')cs[DB[i].cat]=1;}document.getElementById('sReg').textContent=Object.keys(rs).length;document.getElementById('sCat').textContent=Object.keys(cs).length;}
+
+function initApp(){refreshStats();buildFilterOptions();renderFilter();renderDash();renderFavs();}
+
+function switchTab(tab){var btns=document.querySelectorAll('.tab-btn');for(var j=0;j<btns.length;j++)btns[j].classList.toggle('active',btns[j].dataset.tab===tab);var bbtns=document.querySelectorAll('.bnav-btn');for(var j=0;j<bbtns.length;j++)bbtns[j].classList.toggle('active',bbtns[j].dataset.tab===tab);var tabs=document.querySelectorAll('.tab-content');for(var j=0;j<tabs.length;j++)tabs[j].classList.toggle('active',tabs[j].id==='t_'+tab);if(tab==='fav')renderFavs();window.scrollTo({top:0,behavior:'smooth'});}
+
+document.getElementById('tabBar').addEventListener('click',function(e){var b=e.target.closest('.tab-btn');if(b)switchTab(b.dataset.tab);});
+document.getElementById('bottomNav').addEventListener('click',function(e){var b=e.target.closest('.bnav-btn');if(b)switchTab(b.dataset.tab);});
+
+window.addEventListener('scroll',function(){backTop.classList.toggle('show',window.scrollY>400);},{passive:true});
+backTop.addEventListener('click',function(){window.scrollTo({top:0,behavior:'smooth'});});
+
+input.addEventListener('input',function(){var q=this.value.trim();clrBtn.classList.toggle('show',q.length>0);if(!q.length){hideAc();return;}var nq=norm(q);filtered=[];for(var i=0;i<DB.length&&filtered.length<15;i++){if(norm(DB[i].n).indexOf(nq)!==-1||DB[i].n.indexOf(q)!==-1)filtered.push(DB[i]);}if(!filtered.length){ac.innerHTML='<div class="ac-count">검색 결과가 없습니다</div>';showAc();return;}var h='<div class="ac-count">'+filtered.length+'개 기업</div>';for(var j=0;j<filtered.length;j++){var d=filtered[j];h+='<div class="ac-item" data-idx="'+j+'"><div style="min-width:0"><div class="ac-name">'+hlT(d.n,q)+'</div><div class="ac-meta">'+esc(d.prod)+' · '+esc(d.loc)+'</div></div><span class="ac-badge">'+esc(d.year)+'</span></div>';}ac.innerHTML=h;var items=ac.querySelectorAll('.ac-item');for(var k=0;k<items.length;k++)(function(idx){items[idx].addEventListener('click',function(){selCo(idx);});})(k);showAc();acIdx=-1;});
+
+function hlT(t,q){var tl=t.toLowerCase(),ql=q.toLowerCase(),i=tl.indexOf(ql);if(i===-1)return esc(t);return esc(t.slice(0,i))+'<span style="color:var(--accent2);font-weight:700">'+esc(t.slice(i,i+q.length))+'</span>'+esc(t.slice(i+q.length));}
+function showAc(){ac.classList.add('show');acOv.classList.add('show');}
+function hideAc(){ac.classList.remove('show');acOv.classList.remove('show');}
+acOv.addEventListener('click',hideAc);
+clrBtn.addEventListener('click',function(){input.value='';clrBtn.classList.remove('show');hideAc();document.getElementById('result').classList.remove('show');document.getElementById('emptyState').style.display='';input.focus();});
+
+input.addEventListener('keydown',function(e){var it=ac.querySelectorAll('.ac-item');if(e.key==='ArrowDown'){e.preventDefault();acIdx=Math.min(acIdx+1,it.length-1);uf(it);}else if(e.key==='ArrowUp'){e.preventDefault();acIdx=Math.max(acIdx-1,0);uf(it);}else if(e.key==='Enter'&&acIdx>=0){e.preventDefault();selCo(acIdx);}else if(e.key==='Escape')hideAc();});
+function uf(it){for(var i=0;i<it.length;i++)it[i].classList.toggle('active',i===acIdx);if(it[acIdx])it[acIdx].scrollIntoView({block:'nearest'});}
+function selCo(i){var d=filtered[i];input.value=d.n;hideAc();clrBtn.classList.add('show');input.blur();showResult(d);}
+
+window.showCompanyByName=function(n){for(var i=0;i<DB.length;i++)if(DB[i].n===n){switchTab('search');input.value=DB[i].n;clrBtn.classList.add('show');showResult(DB[i]);break;}};
+window.toggleSection=function(el){el.nextElementSibling.classList.toggle('open');el.querySelector('.sarr').classList.toggle('open');};
+
+function showResult(d){
+  document.getElementById('emptyState').style.display='none';
+  var r=document.getElementById('result');
+  var badges='<span class="badge badge-year">'+esc(d.year)+'년 선정</span>';
+  if(d.cat)badges+='<span class="badge badge-cat">'+esc(d.cat)+'</span>';
+  if(d.inn&&d.inn!=='-')badges+='<span class="badge badge-inn">혁신</span>';
+  if(d.ven&&d.ven!=='-')badges+='<span class="badge badge-ven">벤처</span>';
+  if(d.wom&&d.wom!=='-')badges+='<span class="badge badge-wom">여성기업</span>';
+  if(d.dis&&d.dis!=='-')badges+='<span class="badge badge-dis">장애인기업</span>';
+  if(d.soc&&d.soc!=='-')badges+='<span class="badge badge-soc">사회적기업</span>';
+  if(d.gpass)badges+='<span class="badge badge-gpass">G-PASS</span>';
+
+  var hp=d.hp&&d.hp!=='-'?'<a href="'+(d.hp.startsWith('http')?'':'https://')+esc(d.hp)+'" target="_blank" rel="noopener">'+esc(d.hp)+'</a>':esc(d.hp||'-');
+  var emLink=d.em&&d.em!=='-'?'<a href="mailto:'+esc(d.em)+'">'+esc(d.em)+'</a>':'-';
+  var phLink=d.ph&&d.ph!=='-'?'<a href="tel:'+esc(d.ph)+'">'+esc(d.ph)+'</a>':'-';
+  var offLink=d.off&&d.off!=='-'?'<a href="tel:'+esc(d.off)+'">'+esc(d.off)+'</a>':'-';
+
+  var h='<div class="company-hero"><div class="hero-top"><div class="company-name">'+esc(d.n)+'</div>';
+  h+='<button class="fav-btn'+(isFav(d.n)?' on':'')+'" id="favBtn" onclick="toggleFav(\''+esc(d.n).replace(/'/g,"\\'")+'\')">';
+  h+='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg></button></div>';
+  h+='<div class="badge-row">'+badges+'</div>';
+  h+='<div class="quick-info">';
+  h+='<div class="pill"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><div class="pill-content"><div class="pill-label">대표자</div><div class="pill-value">'+esc(d.ceo)+'</div></div></div>';
+  h+='<div class="pill"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg><div class="pill-content"><div class="pill-label">소재지</div><div class="pill-value">'+esc(d.loc)+'</div></div></div>';
+  h+='<div class="pill"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg><div class="pill-content"><div class="pill-label">대표품목</div><div class="pill-value">'+esc(d.prod)+'</div></div></div>';
+  h+='<div class="pill"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg><div class="pill-content"><div class="pill-label">진출국가</div><div class="pill-value">'+esc(d.cn||'-')+'</div></div></div>';
+  h+='</div></div>';
+
+  // Sections
+  h+='<div class="section-grid">';
+  // Contact
+  h+='<div class="section-card"><div class="section-header" onclick="toggleSection(this)"><svg class="si" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg><span class="stxt">연락처 정보</span><svg class="sarr open" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg></div>';
+  h+='<div class="sbody open"><div class="sbody-in">';
+  h+='<div class="info-row"><span class="info-key">사무실</span><span class="info-val">'+offLink+'</span></div>';
+  h+='<div class="info-row"><span class="info-key">팩스</span><span class="info-val">'+esc(d.fax||'-')+'</span></div>';
+  h+='<div class="info-row"><span class="info-key">담당자</span><span class="info-val">'+esc(d.mgr||'-')+'</span></div>';
+  h+='<div class="info-row"><span class="info-key">휴대폰</span><span class="info-val">'+phLink+'</span></div>';
+  h+='<div class="info-row"><span class="info-key">이메일</span><span class="info-val">'+emLink+'</span></div>';
+  h+='<div class="info-row"><span class="info-key">홈페이지</span><span class="info-val">'+hp+'</span></div>';
+  h+='<div class="info-row"><span class="info-key">본사주소</span><span class="info-val">'+esc(d.adr||'-')+'</span></div>';
+  h+='</div></div></div>';
+
+  // Tech & Certification
+  h+='<div class="section-card"><div class="section-header" onclick="toggleSection(this)"><svg class="si" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg><span class="stxt">인증 및 기술성</span><svg class="sarr" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg></div>';
+  h+='<div class="sbody"><div class="sbody-in">';
+  h+='<div class="info-row"><span class="info-key">기술인증</span><span class="info-val">'+esc(d.tech||'-')+'</span></div>';
+  h+='<div class="info-row"><span class="info-key">G-PASS</span><span class="info-val">'+esc(d.gpass||'-')+'</span></div>';
+  h+='<div class="info-row"><span class="info-key">회원사</span><span class="info-val">'+esc(d.mem||'-')+'</span></div>';
+  h+='<div class="info-row"><span class="info-key">UN협의체</span><span class="info-val">'+esc(d.un||'-')+'</span></div>';
+  h+='<div class="info-row"><span class="info-key">협회타사업</span><span class="info-val">'+esc(d.assoc||'-')+'</span></div>';
+  h+='<div class="info-row"><span class="info-key">벤더</span><span class="info-val">'+esc(d.vend||'-')+'</span></div>';
+  h+='<div class="info-row"><span class="info-key">컨설팅내역</span><span class="info-val">'+esc(d.consult||'-')+'</span></div>';
+  h+='</div></div></div>';
+
+  // Support Performance
+  var hasPerf=(d.e21&&d.e21!=='-')||(d.e22&&d.e22!=='-')||(d.e23&&d.e23!=='-')||(d.e24&&d.e24!=='-')||(d.e25)||(d.e26);
+  h+='<div class="section-card"><div class="section-header" onclick="toggleSection(this)"><svg class="si" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10M12 20V4M6 20v-6"/></svg><span class="stxt">지원성과</span><svg class="sarr" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg></div>';
+  h+='<div class="sbody"><div class="sbody-in">';
+  h+='<div class="info-row"><span class="info-key">2021</span><span class="info-val">'+esc(d.e21||'-')+'</span></div>';
+  h+='<div class="info-row"><span class="info-key">2022</span><span class="info-val">'+esc(d.e22||'-')+'</span></div>';
+  h+='<div class="info-row"><span class="info-key">2023</span><span class="info-val">'+esc(d.e23||'-')+'</span></div>';
+  h+='<div class="info-row"><span class="info-key">2024</span><span class="info-val">'+esc(d.e24||'-')+'</span></div>';
+  h+='<div class="info-row"><span class="info-key">2025</span><span class="info-val">'+esc(d.e25||'-')+'</span></div>';
+  h+='<div class="info-row"><span class="info-key">2026</span><span class="info-val">'+esc(d.e26||'-')+'</span></div>';
+  h+='</div></div></div>';
+
+  h+='</div>';
+  r.innerHTML=h;
+  r.classList.add('show');
+  setTimeout(function(){r.scrollIntoView({behavior:'smooth',block:'start'});},100);
+}
+
+// FILTER
+function buildFilterOptions(){var rs={},ys={};for(var i=0;i<DB.length;i++){if(DB[i].loc)rs[DB[i].loc]=1;var yrs=DB[i].year.split(',');for(var j=0;j<yrs.length;j++){var y=yrs[j].trim();if(y)ys[y]=1;}}
+var rSel=document.getElementById('fRegion');rSel.innerHTML='<option value="">전체 지역</option>';Object.keys(rs).sort().forEach(function(k){rSel.innerHTML+='<option value="'+esc(k)+'">'+esc(k)+'</option>';});
+var ySel=document.getElementById('fYear');ySel.innerHTML='<option value="">전체 연도</option>';Object.keys(ys).sort().forEach(function(k){ySel.innerHTML+='<option value="'+esc(k)+'">'+esc(k)+'</option>';});}
+
+function renderFilter(){var rg=document.getElementById('fRegion').value,yr=document.getElementById('fYear').value;
+filteredList=DB.filter(function(d){return(!rg||d.loc===rg)&&(!yr||d.year.indexOf(yr)!==-1);});
+document.getElementById('fResults').textContent=filteredList.length+'개 기업 (전체 '+DB.length+'개)';
+var h='';for(var i=0;i<filteredList.length;i++){var d=filteredList[i];h+='<tr><td class="clickable" onclick="showCompanyByName(\''+esc(d.n).replace(/'/g,"\\'")+'\')">' +esc(d.n)+'</td><td>'+esc(d.ceo)+'</td><td>'+esc(d.prod)+'</td><td>'+esc(d.loc)+'</td><td>'+esc(d.year)+'</td><td>'+esc(d.off)+'</td><td>'+esc(d.mgr)+'</td></tr>';}
+document.getElementById('fBody').innerHTML=h;}
+
+window.exportCSV=function(){var list=filteredList.length?filteredList:DB;
+var csv='\uFEFF기업명,대표자,품목군,대표품목,소재지,선정년도,사무실,팩스,담당자,휴대폰,이메일,홈페이지,본사주소,진출국가,기술인증\n';
+for(var i=0;i<list.length;i++){var d=list[i];csv+='"'+[d.n,d.ceo,d.cat,d.prod,d.loc,d.year,d.off,d.fax,d.mgr,d.ph,d.em,d.hp,d.adr,d.cn,d.tech].map(function(v){return String(v||'').replace(/"/g,'""');}).join('","')+'"\n';}
+var blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='KODABIZ_기업DB.csv';a.click();showToast('CSV 파일이 다운로드됩니다');};
+
+// DASHBOARD
+function renderDash(){var locCounts={},yrCounts={};
+for(var i=0;i<DB.length;i++){var d=DB[i];if(d.loc){locCounts[d.loc]=(locCounts[d.loc]||0)+1;}
+var yrs=d.year.split(',');for(var j=0;j<yrs.length;j++){var y=yrs[j].trim();if(y)yrCounts[y]=(yrCounts[y]||0)+1;}}
+var locArr=Object.entries(locCounts).sort(function(a,b){return b[1]-a[1];});
+var maxLoc=locArr.length?locArr[0][1]:1;
+var h='<div class="dash-card"><div class="dash-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>지역별 기업 분포</div><div class="hbar-wrap">';
+for(var k=0;k<locArr.length;k++){var pct=Math.round(locArr[k][1]/maxLoc*100);h+='<div class="hbar-row"><span class="hbar-label">'+esc(locArr[k][0])+'</span><div class="hbar-track"><div class="hbar-fill" style="width:'+pct+'%"><span class="hbar-num">'+locArr[k][1]+'</span></div></div></div>';}
+h+='</div></div>';
+
+// Year chart
+var yrArr=Object.entries(yrCounts).sort(function(a,b){return a[0].localeCompare(b[0]);});
+h+='<div class="dash-card"><div class="dash-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>선정년도별 기업수</div><div class="hbar-wrap">';
+var maxYr=yrArr.length?Math.max.apply(null,yrArr.map(function(a){return a[1];})):1;
+for(var k=0;k<yrArr.length;k++){var pct=Math.round(yrArr[k][1]/maxYr*100);h+='<div class="hbar-row"><span class="hbar-label">'+esc(yrArr[k][0])+'</span><div class="hbar-track"><div class="hbar-fill" style="width:'+pct+'%"><span class="hbar-num">'+yrArr[k][1]+'</span></div></div></div>';}
+h+='</div></div>';
+document.getElementById('dashGrid').innerHTML=h;}
+
+// FAVORITES
+function renderFavs(){var favs=getFavs();var list=document.getElementById('favList');var empty=document.getElementById('favEmpty');
+if(!favs.length){list.innerHTML='';empty.style.display='';return;}
+empty.style.display='none';var h='';
+for(var i=0;i<favs.length;i++){var d=null;for(var j=0;j<DB.length;j++)if(DB[j].n===favs[i]){d=DB[j];break;}
+if(!d)continue;
+h+='<div class="fav-card" onclick="showCompanyByName(\''+esc(d.n).replace(/'/g,"\\'")+'\')">';
+h+='<div class="fav-info"><div class="fav-name">'+esc(d.n)+'</div><div class="fav-meta">'+esc(d.prod)+' · '+esc(d.loc)+'</div></div>';
+h+='<button class="fav-rm" onclick="event.stopPropagation();toggleFav(\''+esc(d.n).replace(/'/g,"\\'")+'\')" title="삭제"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>';}
+list.innerHTML=h;}
+</script>
+</body>
+</html>
