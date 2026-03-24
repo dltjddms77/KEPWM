@@ -6,6 +6,9 @@
 <title>KEP-Workforce Management Platform</title>
 <link href="https://cdnjs.cloudflare.com/ajax/libs/pretendard/1.3.9/variable/pretendardvariable.min.css" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
 
@@ -596,32 +599,189 @@ body {
 </head>
 <body>
 
-<!-- PIN Lock Screen -->
-<div id="lockScreen" style="position:fixed;inset:0;z-index:9999;background:#F4F6FA;display:flex;align-items:center;justify-content:center;flex-direction:column;">
-  <div style="text-align:center;padding:40px;background:white;border-radius:16px;border:1px solid #D4DAE6;box-shadow:0 4px 24px rgba(27,42,74,0.1);width:380px;">
-    <div style="font-size:40px;margin-bottom:16px;">🔒</div>
+<!-- Auth Screen -->
+<div id="authScreen" style="position:fixed;inset:0;z-index:9999;background:#F4F6FA;display:flex;align-items:center;justify-content:center;flex-direction:column;">
+  <div style="text-align:center;padding:40px;background:white;border-radius:16px;border:1px solid #D4DAE6;box-shadow:0 4px 24px rgba(27,42,74,0.1);width:400px;">
+    <div style="font-size:40px;margin-bottom:16px;">🔐</div>
     <div style="font-size:18px;font-weight:700;color:#1B2A4A;margin-bottom:4px;">KEP-Workforce Management</div>
-    <div style="font-size:12px;color:#8494B2;margin-bottom:24px;">접근 권한이 필요합니다. 비밀번호를 입력해주세요.</div>
-    <input type="password" id="pinInput" placeholder="비밀번호 입력" style="width:100%;padding:12px 16px;border:1px solid #D4DAE6;border-radius:8px;font-size:14px;font-family:inherit;text-align:center;letter-spacing:2px;margin-bottom:12px;">
-    <div id="pinError" style="font-size:12px;color:#D94452;margin-bottom:12px;display:none;">비밀번호가 틀렸습니다.</div>
-    <button id="pinBtn" style="width:100%;padding:10px;background:linear-gradient(135deg,#1B3A5C,#4A90C4);color:white;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">확인</button>
+    <div style="font-size:12px;color:#8494B2;margin-bottom:24px;">KEP 이메일(@kep.or.kr)로 로그인해주세요.</div>
+    
+    <div id="authLoginForm">
+      <input type="email" id="authEmail" placeholder="이메일 (예: selee@kep.or.kr)" style="width:100%;padding:12px 16px;border:1px solid #D4DAE6;border-radius:8px;font-size:13px;font-family:inherit;margin-bottom:8px;">
+      <input type="password" id="authPassword" placeholder="비밀번호" style="width:100%;padding:12px 16px;border:1px solid #D4DAE6;border-radius:8px;font-size:13px;font-family:inherit;margin-bottom:8px;">
+      <div id="authError" style="font-size:12px;color:#D94452;margin-bottom:8px;display:none;"></div>
+      <button id="authLoginBtn" onclick="doLogin()" style="width:100%;padding:10px;background:linear-gradient(135deg,#1B3A5C,#4A90C4);color:white;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;margin-bottom:8px;">로그인</button>
+      <div style="font-size:11px;color:#8494B2;">계정이 없으신가요? <a href="#" onclick="showRegister();return false;" style="color:#2B5EA7;font-weight:600;">회원가입</a></div>
+    </div>
+    
+    <div id="authRegisterForm" style="display:none;">
+      <input type="email" id="regEmail" placeholder="KEP 이메일 (@kep.or.kr만 가능)" style="width:100%;padding:12px 16px;border:1px solid #D4DAE6;border-radius:8px;font-size:13px;font-family:inherit;margin-bottom:8px;">
+      <input type="password" id="regPassword" placeholder="비밀번호 (6자 이상)" style="width:100%;padding:12px 16px;border:1px solid #D4DAE6;border-radius:8px;font-size:13px;font-family:inherit;margin-bottom:8px;">
+      <input type="password" id="regPasswordConfirm" placeholder="비밀번호 확인" style="width:100%;padding:12px 16px;border:1px solid #D4DAE6;border-radius:8px;font-size:13px;font-family:inherit;margin-bottom:8px;">
+      <div id="regError" style="font-size:12px;color:#D94452;margin-bottom:8px;display:none;"></div>
+      <button onclick="doRegister()" style="width:100%;padding:10px;background:linear-gradient(135deg,#1B3A5C,#4A90C4);color:white;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;margin-bottom:8px;">회원가입</button>
+      <div style="font-size:11px;color:#8494B2;">이미 계정이 있으신가요? <a href="#" onclick="showLogin();return false;" style="color:#2B5EA7;font-weight:600;">로그인</a></div>
+    </div>
+
+    <div id="authLoading" style="display:none;padding:20px;">
+      <div style="font-size:14px;color:#4A5E80;">로딩 중...</div>
+    </div>
+
+    <div id="verifyNotice" style="display:none;">
+      <div style="font-size:36px;margin-bottom:12px;">📧</div>
+      <div style="font-size:15px;font-weight:700;color:#1B2A4A;margin-bottom:8px;">인증 메일이 발송되었습니다!</div>
+      <div style="font-size:12px;color:#4A5E80;line-height:1.6;margin-bottom:16px;">KEP 이메일 받은편지함을 확인하고<br>인증 링크를 클릭해주세요.<br><span style="color:#8494B2;">(스팸함도 확인해주세요)</span></div>
+      <button onclick="showLogin()" style="width:100%;padding:10px;background:linear-gradient(135deg,#1B3A5C,#4A90C4);color:white;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;margin-bottom:8px;">인증 완료 후 로그인하기</button>
+      <div style="font-size:11px;color:#8494B2;">메일이 안 왔나요? <a href="#" onclick="resendVerification();return false;" style="color:#2B5EA7;font-weight:600;">인증 메일 재발송</a></div>
+    </div>
   </div>
 </div>
+
 <script>
-(function(){
-  var ls = document.getElementById('lockScreen');
-  var pi = document.getElementById('pinInput');
-  var pe = document.getElementById('pinError');
-  var pb = document.getElementById('pinBtn');
-  if (sessionStorage.getItem('kep_unlocked') === '1') { ls.style.display='none'; return; }
-  function tryPin(){
-    if(pi.value==='0624'){ ls.style.display='none'; sessionStorage.setItem('kep_unlocked','1'); }
-    else{ pe.style.display='block'; pi.value=''; pi.focus(); }
+// Firebase Configuration
+const firebaseConfig = {
+  apiKey: "AIzaSyDbyTPaqADax-ldIyxfO3Vxioxd7cJRtH0",
+  authDomain: "kepwm-e32e5.firebaseapp.com",
+  projectId: "kepwm-e32e5",
+  storageBucket: "kepwm-e32e5.firebasestorage.app",
+  messagingSenderId: "399772077463",
+  appId: "1:399772077463:web:ef3d1ea67607e9916188d2"
+};
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const firestore = firebase.firestore();
+
+let currentUser = null;
+
+function showRegister() {
+  document.getElementById('authLoginForm').style.display = 'none';
+  document.getElementById('authRegisterForm').style.display = 'block';
+  document.getElementById('regError').style.display = 'none';
+}
+function showLogin() {
+  document.getElementById('authRegisterForm').style.display = 'none';
+  document.getElementById('authLoginForm').style.display = 'block';
+  document.getElementById('authError').style.display = 'none';
+}
+
+function validateKepEmail(email) {
+  return email && email.trim().toLowerCase().endsWith('@kep.or.kr');
+}
+
+function showAuthError(id, msg) {
+  const el = document.getElementById(id);
+  el.textContent = msg;
+  el.style.display = 'block';
+}
+
+async function doLogin() {
+  const email = document.getElementById('authEmail').value.trim();
+  const password = document.getElementById('authPassword').value;
+  document.getElementById('authError').style.display = 'none';
+  
+  if (!validateKepEmail(email)) {
+    showAuthError('authError', '@kep.or.kr 이메일만 사용할 수 있습니다.');
+    return;
   }
-  pb.addEventListener('click', tryPin);
-  pi.addEventListener('keydown', function(e){ if(e.key==='Enter') tryPin(); });
-  pi.focus();
-})();
+  if (!password) {
+    showAuthError('authError', '비밀번호를 입력해주세요.');
+    return;
+  }
+  
+  try {
+    document.getElementById('authLoginBtn').textContent = '로그인 중...';
+    document.getElementById('authLoginBtn').disabled = true;
+    await auth.signInWithEmailAndPassword(email, password);
+  } catch(e) {
+    let msg = '로그인에 실패했습니다.';
+    if (e.code === 'auth/user-not-found') msg = '등록되지 않은 이메일입니다.';
+    else if (e.code === 'auth/wrong-password' || e.code === 'auth/invalid-credential') msg = '비밀번호가 올바르지 않습니다.';
+    else if (e.code === 'auth/too-many-requests') msg = '너무 많은 시도입니다. 잠시 후 다시 시도해주세요.';
+    showAuthError('authError', msg);
+    document.getElementById('authLoginBtn').textContent = '로그인';
+    document.getElementById('authLoginBtn').disabled = false;
+  }
+}
+
+async function doRegister() {
+  const email = document.getElementById('regEmail').value.trim();
+  const pw = document.getElementById('regPassword').value;
+  const pw2 = document.getElementById('regPasswordConfirm').value;
+  document.getElementById('regError').style.display = 'none';
+  
+  if (!validateKepEmail(email)) {
+    showAuthError('regError', '@kep.or.kr 이메일만 사용할 수 있습니다.');
+    return;
+  }
+  if (pw.length < 6) {
+    showAuthError('regError', '비밀번호는 6자 이상이어야 합니다.');
+    return;
+  }
+  if (pw !== pw2) {
+    showAuthError('regError', '비밀번호가 일치하지 않습니다.');
+    return;
+  }
+  
+  try {
+    const cred = await auth.createUserWithEmailAndPassword(email, pw);
+    await cred.user.sendEmailVerification();
+    await auth.signOut();
+    document.getElementById('authRegisterForm').style.display = 'none';
+    document.getElementById('authLoginForm').style.display = 'none';
+    document.getElementById('verifyNotice').style.display = 'block';
+  } catch(e) {
+    let msg = '회원가입에 실패했습니다.';
+    if (e.code === 'auth/email-already-in-use') msg = '이미 등록된 이메일입니다.';
+    else if (e.code === 'auth/weak-password') msg = '비밀번호가 너무 약합니다.';
+    showAuthError('regError', msg);
+  }
+}
+
+async function resendVerification() {
+  const email = document.getElementById('authEmail').value.trim() || document.getElementById('regEmail').value.trim();
+  const pw = prompt('비밀번호를 입력해주세요:');
+  if (!email || !pw) return;
+  try {
+    const cred = await auth.signInWithEmailAndPassword(email, pw);
+    if (!cred.user.emailVerified) {
+      await cred.user.sendEmailVerification();
+      await auth.signOut();
+      alert('인증 메일이 다시 발송되었습니다. 메일함을 확인해주세요.');
+    }
+  } catch(e) {
+    alert('발송 실패: 이메일과 비밀번호를 확인해주세요.');
+  }
+}
+
+// Auth state listener
+auth.onAuthStateChanged(async (user) => {
+  if (user) {
+    if (!validateKepEmail(user.email)) {
+      await auth.signOut();
+      showAuthError('authError', '@kep.or.kr 이메일만 사용할 수 있습니다.');
+      return;
+    }
+    if (!user.emailVerified) {
+      await auth.signOut();
+      document.getElementById('authLoginForm').style.display = 'block';
+      document.getElementById('authRegisterForm').style.display = 'none';
+      document.getElementById('verifyNotice').style.display = 'none';
+      showAuthError('authError', '이메일 인증이 완료되지 않았습니다. 메일함을 확인해주세요.');
+      return;
+    }
+    currentUser = user;
+    document.getElementById('authScreen').style.display = 'none';
+    init();
+  } else {
+    currentUser = null;
+    document.getElementById('authScreen').style.display = 'flex';
+  }
+});
+
+// Enter key support
+document.getElementById('authEmail').addEventListener('keydown', (e) => { if(e.key==='Enter') document.getElementById('authPassword').focus(); });
+document.getElementById('authPassword').addEventListener('keydown', (e) => { if(e.key==='Enter') doLogin(); });
+document.getElementById('regPasswordConfirm').addEventListener('keydown', (e) => { if(e.key==='Enter') doRegister(); });
 </script>
 
 <div class="header">
@@ -640,6 +800,10 @@ body {
     <button class="btn btn-export" onclick="exportToExcel()" title="전체 데이터를 Excel 파일로 추출">📊 엑셀 추출</button>
     <button class="btn btn-save" onclick="saveAsFile()" title="현재 데이터를 포함한 HTML 파일 다운로드">💾 파일로 저장</button>
     <div class="header-date" id="todayDate"></div>
+    <div id="userInfo" style="display:flex;align-items:center;gap:8px;">
+      <span id="currentUserEmail" style="font-size:11px;color:var(--text-muted);"></span>
+      <button onclick="doLogout()" style="padding:5px 12px;background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text-dim);font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;">로그아웃</button>
+    </div>
   </div>
 </div>
 
@@ -666,9 +830,9 @@ body {
       <div class="footer-right">
         <div class="footer-meta">
           <div>최종 수정: <span id="footerLastSaved">-</span></div>
-          <div>팀장 전용 · 외부 공유 금지</div>
+          <div>KEP 직원 전용 · 실시간 동기화</div>
         </div>
-        <div class="footer-version">v1.2.0</div>
+        <div class="footer-version">v2.0.0 · Cloud</div>
       </div>
     </div>
   </div>
@@ -1053,100 +1217,68 @@ const DATA = {
 let currentMemberId = 'sungeun';
 let currentTab = 'profile';
 
-// ── Persistence (IndexedDB) ──
-const DB_NAME = 'kep_oneonone_db';
-const DB_VERSION = 1;
-const STORE_NAME = 'appdata';
-let db = null;
-
-function openDB() {
-  return new Promise((resolve, reject) => {
-    const req = indexedDB.open(DB_NAME, DB_VERSION);
-    req.onupgradeneeded = (e) => {
-      const database = e.target.result;
-      if (!database.objectStoreNames.contains(STORE_NAME)) {
-        database.createObjectStore(STORE_NAME);
-      }
-    };
-    req.onsuccess = (e) => { db = e.target.result; resolve(db); };
-    req.onerror = (e) => reject(e.target.error);
-  });
-}
-
-function dbGet(key) {
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction(STORE_NAME, 'readonly');
-    const store = tx.objectStore(STORE_NAME);
-    const req = store.get(key);
-    req.onsuccess = () => resolve(req.result);
-    req.onerror = () => reject(req.error);
-  });
-}
-
-function dbPut(key, value) {
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction(STORE_NAME, 'readwrite');
-    const store = tx.objectStore(STORE_NAME);
-    const req = store.put(value, key);
-    req.onsuccess = () => resolve();
-    req.onerror = () => reject(req.error);
-  });
-}
+// ── Persistence (Firestore) ──
+let firestoreUnsubscribe = null;
+let _isSaving = false;
 
 async function loadData() {
   try {
-    // Priority 1: Embedded data inside this HTML file
-    const embeddedEl = document.getElementById('embedded-data');
-    if (embeddedEl) {
-      const raw = embeddedEl.textContent.trim();
-      if (raw && raw !== 'null') {
-        try {
-          const embedded = JSON.parse(raw);
-          if (embedded && embedded.members) {
-            embedded.members.forEach(sm => {
-              const dm = DATA.members.find(m => m.id === sm.id);
-              if (dm) applyMemberData(dm, sm);
-            });
-            console.log('Loaded from embedded data');
-            // Also save to IndexedDB for local persistence
-            await openDB();
-            await dbPut('members', JSON.parse(JSON.stringify(DATA.members)));
-            return;
-          }
-        } catch(e) { console.warn('Embedded data parse error:', e); }
-      }
-    }
-
-    await openDB();
-
-    // Priority 2: Migrate from localStorage
-    const lsData = localStorage.getItem('kep_oneonone_data');
-    if (lsData) {
-      try {
-        const parsed = JSON.parse(lsData);
-        parsed.members.forEach(sm => {
-          const dm = DATA.members.find(m => m.id === sm.id);
-          if (dm) applyMemberData(dm, sm);
-        });
-        await dbPut('members', JSON.parse(JSON.stringify(DATA.members)));
-        localStorage.removeItem('kep_oneonone_data');
-        console.log('Migrated from localStorage to IndexedDB');
-        return;
-      } catch(e) {}
-    }
-
-    // Priority 3: Load from IndexedDB
-    const saved = await dbGet('members');
-    if (saved) {
-      saved.forEach(sm => {
-        const dm = DATA.members.find(m => m.id === sm.id);
+    // Load each member from Firestore
+    const snapshot = await firestore.collection('members').get();
+    if (!snapshot.empty) {
+      snapshot.forEach(doc => {
+        const sm = doc.data();
+        const dm = DATA.members.find(m => m.id === doc.id);
         if (dm) applyMemberData(dm, sm);
       });
-      console.log('Loaded from IndexedDB');
+      console.log('Loaded from Firestore');
+    } else {
+      // First time: upload default data to Firestore
+      console.log('No data in Firestore, uploading defaults...');
+      for (const m of DATA.members) {
+        const mData = JSON.parse(JSON.stringify(m));
+        // Remove file blobs from weeklyReviews (too large for Firestore)
+        if (mData.weeklyReviews) {
+          mData.weeklyReviews.forEach(wr => { wr.file = null; });
+        }
+        await firestore.collection('members').doc(m.id).set(mData);
+      }
+      console.log('Default data uploaded to Firestore');
     }
+    
+    // Set up real-time listener
+    setupRealtimeListener();
   } catch(e) {
-    console.error('Load error:', e);
+    console.error('Firestore load error:', e);
+    showToast('⚠️ 데이터 로드 실패 - 네트워크를 확인하세요');
   }
+}
+
+function setupRealtimeListener() {
+  if (firestoreUnsubscribe) firestoreUnsubscribe();
+  
+  firestoreUnsubscribe = firestore.collection('members').onSnapshot((snapshot) => {
+    if (_isSaving) return; // Skip if we triggered the change
+    
+    snapshot.docChanges().forEach(change => {
+      if (change.type === 'modified') {
+        const sm = change.doc.data();
+        const dm = DATA.members.find(m => m.id === change.doc.id);
+        if (dm) {
+          applyMemberData(dm, sm);
+          console.log('Realtime update for:', change.doc.id);
+        }
+      }
+    });
+    
+    // Re-render UI on remote changes
+    if (snapshot.docChanges().some(c => c.type === 'modified')) {
+      renderSidebar();
+      renderTab();
+    }
+  }, (err) => {
+    console.error('Realtime listener error:', err);
+  });
 }
 
 function applyMemberData(target, source) {
@@ -1170,14 +1302,25 @@ function saveData() {
   clearTimeout(_saveTimeout);
   _saveTimeout = setTimeout(async () => {
     try {
-      await dbPut('members', JSON.parse(JSON.stringify(DATA.members)));
+      _isSaving = true;
+      const m = DATA.members.find(x => x.id === currentMemberId);
+      if (m) {
+        const mData = JSON.parse(JSON.stringify(m));
+        // Remove file blobs (too large for Firestore)
+        if (mData.weeklyReviews) {
+          mData.weeklyReviews.forEach(wr => { wr.file = null; });
+        }
+        await firestore.collection('members').doc(m.id).set(mData, { merge: true });
+      }
       updateLastSaved();
-      showToast('💾 저장됨');
+      showToast('💾 저장됨 (클라우드)');
+      setTimeout(() => { _isSaving = false; }, 1000);
     } catch(e) {
-      console.error('IndexedDB save error:', e);
-      showToast('⚠️ 저장 실패');
+      console.error('Firestore save error:', e);
+      _isSaving = false;
+      showToast('⚠️ 저장 실패 - 네트워크를 확인하세요');
     }
-  }, 300);
+  }, 500);
 }
 
 function updateLastSaved() {
@@ -1353,9 +1496,19 @@ function exportToExcel() {
 async function init() {
   await loadData();
   document.getElementById('todayDate').textContent = new Date().toLocaleDateString('ko-KR', { year:'numeric', month:'long', day:'numeric', weekday:'long' });
+  if (currentUser) {
+    document.getElementById('currentUserEmail').textContent = currentUser.email;
+  }
   loadQuickMemo();
   renderSidebar();
   renderMain();
+}
+
+function doLogout() {
+  if (!confirm('로그아웃 하시겠습니까?')) return;
+  if (firestoreUnsubscribe) firestoreUnsubscribe();
+  auth.signOut();
+  location.reload();
 }
 
 // ── Sidebar ──
