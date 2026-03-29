@@ -9,6 +9,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
 
@@ -650,6 +651,7 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const firestore = firebase.firestore();
+const storage = firebase.storage();
 
 let currentUser = null;
 
@@ -1243,10 +1245,6 @@ async function loadData() {
       console.log('No data in Firestore, uploading defaults...');
       for (const m of DATA.members) {
         const mData = JSON.parse(JSON.stringify(m));
-        // Remove file blobs from weeklyReviews (too large for Firestore)
-        if (mData.weeklyReviews) {
-          mData.weeklyReviews.forEach(wr => { wr.file = null; });
-        }
         await firestore.collection('members').doc(m.id).set(mData);
       }
       console.log('Default data uploaded to Firestore');
@@ -1312,10 +1310,7 @@ function saveData() {
       const m = DATA.members.find(x => x.id === currentMemberId);
       if (m) {
         const mData = JSON.parse(JSON.stringify(m));
-        // Remove file blobs (too large for Firestore)
-        if (mData.weeklyReviews) {
-          mData.weeklyReviews.forEach(wr => { wr.file = null; });
-        }
+        // file field now stores Firebase Storage URL (short string), safe for Firestore
         await firestore.collection('members').doc(m.id).set(mData, { merge: true });
       }
       updateLastSaved();
@@ -1971,22 +1966,42 @@ function triggerUpload(memberId, weekIdx) {
 
 function handleFileUpload(memberId, weekIdx, file) {
   if (!file) return;
-  // 5MB limit for localStorage
-  if (file.size > 5 * 1024 * 1024) {
-    showToast('⚠️ 파일 크기는 5MB 이하만 가능합니다');
+  // 10MB limit for Storage
+  if (file.size > 10 * 1024 * 1024) {
+    showToast('⚠️ 파일 크기는 10MB 이하만 가능합니다');
     return;
   }
-  const reader = new FileReader();
-  reader.onload = (e) => {
-    const m = DATA.members.find(x => x.id === memberId);
-    if (!m || !m.weeklyReviews) return;
-    m.weeklyReviews[weekIdx].file = e.target.result;
+  const m = DATA.members.find(x => x.id === memberId);
+  if (!m || !m.weeklyReviews) return;
+
+  // Show uploading state
+  m.weeklyReviews[weekIdx].fileName = '⏳ 업로드 중...';
+  m.weeklyReviews[weekIdx].uploadedAt = '';
+  m.weeklyReviews[weekIdx].file = null;
+  renderTab();
+
+  // Upload to Firebase Storage
+  const safeName = file.name.replace(/[^a-zA-Z0-9가-힣._-]/g, '_');
+  const storagePath = `weekly_reviews/${memberId}/week${weekIdx + 1}_${Date.now()}_${safeName}`;
+  const storageRef = storage.ref(storagePath);
+  
+  storageRef.put(file).then(snapshot => {
+    return snapshot.ref.getDownloadURL();
+  }).then(downloadURL => {
+    m.weeklyReviews[weekIdx].file = downloadURL;
     m.weeklyReviews[weekIdx].fileName = file.name;
+    m.weeklyReviews[weekIdx].storagePath = storagePath;
     m.weeklyReviews[weekIdx].uploadedAt = new Date().toLocaleString('ko-KR', { month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit' });
     saveData();
     renderTab();
-  };
-  reader.readAsDataURL(file);
+    showToast('✅ 파일 업로드 완료');
+  }).catch(err => {
+    console.error('Storage upload error:', err);
+    m.weeklyReviews[weekIdx].fileName = '';
+    m.weeklyReviews[weekIdx].file = null;
+    renderTab();
+    showToast('⚠️ 업로드 실패: ' + (err.code === 'storage/unauthorized' ? 'Storage 권한을 확인하세요' : err.message));
+  });
 }
 
 function downloadFile(memberId, weekIdx) {
@@ -1994,21 +2009,30 @@ function downloadFile(memberId, weekIdx) {
   if (!m || !m.weeklyReviews) return;
   const r = m.weeklyReviews[weekIdx];
   if (!r.file) return;
-  const a = document.createElement('a');
-  a.href = r.file;
-  a.download = r.fileName;
-  a.click();
+  // file is now a Firebase Storage URL — open in new tab
+  window.open(r.file, '_blank');
 }
 
 function removeFile(memberId, weekIdx) {
   if (!confirm('첨부파일을 삭제하시겠습니까?')) return;
   const m = DATA.members.find(x => x.id === memberId);
   if (!m || !m.weeklyReviews) return;
-  m.weeklyReviews[weekIdx].file = null;
-  m.weeklyReviews[weekIdx].fileName = '';
-  m.weeklyReviews[weekIdx].uploadedAt = '';
+  const r = m.weeklyReviews[weekIdx];
+  
+  // Delete from Storage if path exists
+  if (r.storagePath) {
+    storage.ref(r.storagePath).delete().catch(err => {
+      console.warn('Storage delete warning:', err.message);
+    });
+  }
+  
+  r.file = null;
+  r.fileName = '';
+  r.uploadedAt = '';
+  r.storagePath = '';
   saveData();
   renderTab();
+  showToast('🗑️ 파일 삭제됨');
 }
 
 // ── Other Helpers ──
