@@ -4,432 +4,776 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="theme-color" content="#0a1628">
-<title>KODABIZ 기업정보 조회</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+<meta name="theme-color" content="#F4F6FA">
+<title>GEAR-UP 위키</title>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/pretendard/1.3.9/variable/pretendardvariable.min.css" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <style>
-:root{--bg:#0a1628;--surface:#0f1f38;--surface2:#162a4a;--border:#1e3a5f;--accent:#0ea5e9;--accent2:#38bdf8;--accent-glow:rgba(14,165,233,0.15);--green:#10b981;--amber:#f59e0b;--red:#ef4444;--text:#e2e8f0;--text2:#94a3b8;--text3:#64748b;--white:#fff;--teal:#14b8a6}
+:root{--bg:#F4F6FA;--surface:#FFF;--surface-2:#F0F3F8;--surface-3:#E6EAF2;--border:#D4DAE6;--border-light:#E8ECF4;--text:#1B2A4A;--text-dim:#4A5E80;--text-muted:#8494B2;--accent-1:#2B5EA7;--accent-1-light:#3A7BD5;--accent-1-dim:rgba(43,94,167,.08);--accent-1-bg:rgba(43,94,167,.05);--accent-2:#E8733A;--accent-3:#2E8B6E;--accent-4:#4A90C4;--danger:#D94452;--amber:#D4940B;--teal:#1A9B7A;--radius:16px;--radius-sm:10px;--shadow-sm:0 2px 8px rgba(27,42,74,.05);--shadow-md:0 8px 32px rgba(27,42,74,.08);--shadow-lg:0 16px 48px rgba(27,42,74,.12)}
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html{scroll-behavior:smooth}
-body{font-family:'Noto Sans KR',-apple-system,BlinkMacSystemFont,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;min-height:100dvh;overflow-x:hidden;-webkit-font-smoothing:antialiased;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom) 0}
-.bg-grid{position:fixed;top:0;left:0;width:100%;height:100%;background-image:linear-gradient(rgba(14,165,233,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(14,165,233,.03) 1px,transparent 1px);background-size:60px 60px;pointer-events:none;z-index:0}
-/* LOGIN */
-.login-screen{position:fixed;top:0;left:0;right:0;bottom:0;z-index:9999;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:20px}
-.login-screen.hidden{display:none}
-.login-card{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:36px 28px;width:100%;max-width:380px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.5)}
-.login-logo{width:160px;margin:0 auto 20px;border-radius:12px;overflow:hidden;padding:8px;background:rgba(255,255,255,0.95);border-radius:16px}
-.login-logo img{width:100%;height:auto;display:block}
-.login-title{font-size:18px;font-weight:900;color:var(--white);margin-bottom:4px}
-.login-sub{font-size:12px;color:var(--text3);margin-bottom:24px}
-.login-input{width:100%;padding:14px 16px;background:var(--surface2);border:1.5px solid var(--border);border-radius:12px;color:var(--white);font-size:16px;font-family:inherit;outline:none;text-align:center;letter-spacing:4px;transition:border-color .25s;margin-bottom:16px}
-.login-input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-glow)}
-.login-input::placeholder{letter-spacing:0;font-size:14px;color:var(--text3)}
-.login-btn{width:100%;padding:14px;background:linear-gradient(135deg,var(--accent),#0284c7);border:none;border-radius:12px;color:#fff;font-size:15px;font-weight:700;font-family:inherit;cursor:pointer;transition:all .2s}
-.login-btn:active{transform:scale(.97)}
-.login-error{color:var(--red);font-size:13px;margin-top:12px;display:none}
-.login-error.show{display:block;animation:shake .4s ease}
-@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
-/* APP */
+body{font-family:'Pretendard Variable',-apple-system,BlinkMacSystemFont,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;min-height:100dvh;overflow-x:hidden;-webkit-font-smoothing:antialiased}
+.loading-screen{position:fixed;inset:0;z-index:9999;background:var(--bg);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:16px}
+.loading-screen.hidden{display:none}
+.loading-spinner{width:28px;height:28px;border:3px solid var(--border);border-top-color:var(--accent-1);border-radius:50%;animation:spin .7s linear infinite}
+.loading-text{font-size:13px;color:var(--text-muted)}
+@keyframes spin{to{transform:rotate(360deg)}}
 .app{display:none}.app.show{display:block}
-.container{max-width:960px;margin:0 auto;padding:16px;position:relative;z-index:1}
-.header{text-align:center;padding:24px 12px 16px;position:relative}
-.header::before{content:'';position:absolute;top:-40px;left:50%;transform:translateX(-50%);width:240px;height:240px;background:radial-gradient(circle,rgba(14,165,233,.12),transparent 70%);pointer-events:none}
-.header-logo{height:44px;margin-bottom:12px;padding:6px 12px;background:rgba(255,255,255,0.95);border-radius:10px}
-h1{font-size:clamp(16px,4.5vw,28px);font-weight:900;background:linear-gradient(135deg,#fff,#7dd3fc 50%,#38bdf8);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;letter-spacing:-.5px;line-height:1.3}
-.subtitle{color:var(--text2);font-size:12px;margin-top:4px;font-weight:300}
-.stats-row{display:flex;justify-content:center;gap:20px;margin-top:14px}
-.stat-item{text-align:center}.stat-num{font-size:20px;font-weight:900;color:var(--accent2)}.stat-label{font-size:10px;color:var(--text3)}
-/* TABS */
-.tab-bar{display:flex;gap:0;margin:0 0 4px;background:var(--surface);border-radius:12px;border:1px solid var(--border);overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.container{max-width:960px;margin:0 auto;padding:20px 24px;position:relative}
+.user-bar{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.user-bar-left{display:flex;align-items:center;gap:10px}
+.back-link{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:var(--radius-sm);background:var(--surface);border:1px solid var(--border);color:var(--text-dim);font-size:12px;font-weight:600;text-decoration:none;transition:all .2s;box-shadow:var(--shadow-sm)}
+.back-link:hover{border-color:var(--accent-1);color:var(--accent-1);background:var(--accent-1-dim)}
+.back-link svg{width:14px;height:14px}
+.user-info{font-size:12px;color:var(--text-muted)}.user-info strong{color:var(--text-dim);font-weight:600}
+.logout-btn{padding:6px 14px;background:var(--surface);border:1px solid var(--border);border-radius:8px;color:var(--text-muted);font-size:11px;font-weight:600;font-family:inherit;cursor:pointer;transition:all .2s}
+.logout-btn:hover{background:#FEF2F2;color:var(--danger);border-color:rgba(217,68,82,.2)}
+.header{text-align:center;padding:8px 12px 20px}
+.header-badge{display:inline-flex;align-items:center;gap:8px;background:var(--accent-1-dim);border:1px solid rgba(43,94,167,.12);border-radius:100px;padding:5px 14px 5px 8px;margin-bottom:12px}
+.header-badge-dot{width:7px;height:7px;border-radius:50%;background:var(--accent-3)}
+.header-badge span{font-size:11px;color:var(--accent-1);font-weight:600}
+h1{font-size:clamp(22px,5vw,30px);font-weight:800;color:var(--text);letter-spacing:-.5px;line-height:1.3}
+h1 .accent{color:var(--accent-1)}
+.subtitle{color:var(--text-muted);font-size:13px;margin-top:4px;font-weight:400}
+.stats-row{display:flex;justify-content:center;gap:32px;margin-top:16px}
+.stat-item{text-align:center}
+.stat-num{font-size:26px;font-weight:800;color:var(--accent-1);letter-spacing:-.5px}
+.stat-label{font-size:10px;color:var(--text-muted);margin-top:2px;font-weight:500}
+.tab-bar{display:flex;gap:0;background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius);overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;margin-bottom:8px;box-shadow:var(--shadow-sm)}
 .tab-bar::-webkit-scrollbar{display:none}
-.tab-btn{flex:0 0 auto;padding:11px 14px;border:none;background:transparent;color:var(--text3);font-size:12px;font-weight:600;font-family:inherit;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:5px;white-space:nowrap}
-.tab-btn.active{background:var(--accent);color:#fff;border-radius:10px}
-.tab-btn:active{opacity:.8}
+.tab-btn{flex:0 0 auto;padding:12px 18px;border:none;background:transparent;color:var(--text-muted);font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:6px;white-space:nowrap}
+.tab-btn.active{background:linear-gradient(135deg,#1B3A5C,#4A90C4);color:#fff;border-radius:12px;box-shadow:0 4px 12px rgba(27,58,92,.2)}
+.tab-btn:hover:not(.active){color:var(--text-dim);background:var(--surface-2)}
 .tab-btn svg{width:14px;height:14px}
 .tab-content{display:none}.tab-content.active{display:block}
-/* SEARCH */
-.search-section{position:sticky;top:0;z-index:200;padding:8px 0 12px;background:rgba(10,22,40,.92);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px)}
+.search-section{position:sticky;top:0;z-index:200;padding:8px 0 12px;background:rgba(244,246,250,.95);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
 .search-wrap{position:relative}
-.search-box{position:relative;background:var(--surface);border:1.5px solid var(--border);border-radius:14px;overflow:hidden;transition:all .25s}
-.search-box:focus-within{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-glow),0 4px 20px rgba(0,0,0,.3)}
-.search-box input{width:100%;padding:14px 48px 14px 44px;background:transparent;border:none;color:var(--white);font-size:16px;font-family:inherit;outline:none}
-.search-box input::placeholder{color:var(--text3);font-size:14px}
-.search-icon{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--text3);pointer-events:none}
+.search-box{position:relative;background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius);overflow:hidden;transition:all .25s;box-shadow:var(--shadow-sm)}
+.search-box:focus-within{border-color:var(--accent-1);box-shadow:0 0 0 3px var(--accent-1-dim),var(--shadow-md)}
+.search-box input{width:100%;padding:14px 48px 14px 44px;background:transparent;border:none;color:var(--text);font-size:15px;font-family:inherit;outline:none}
+.search-box input::placeholder{color:var(--text-muted);font-size:14px}
+.search-icon{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--text-muted);pointer-events:none}
 .search-icon svg{width:18px;height:18px}
-.clr-btn{position:absolute;right:10px;top:50%;transform:translateY(-50%);background:var(--surface2);border:none;color:var(--text3);width:30px;height:30px;border-radius:8px;cursor:pointer;display:none;align-items:center;justify-content:center;font-size:16px}
+.clr-btn{position:absolute;right:10px;top:50%;transform:translateY(-50%);background:var(--surface-2);border:1px solid var(--border-light);color:var(--text-muted);width:28px;height:28px;border-radius:8px;cursor:pointer;display:none;align-items:center;justify-content:center;font-size:15px}
 .clr-btn.show{display:flex}
-.ac-overlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.4);z-index:199}.ac-overlay.show{display:block}
-.autocomplete{position:absolute;top:calc(100% + 4px);left:0;right:0;background:var(--surface);border:1.5px solid var(--border);border-radius:14px;overflow-y:auto;box-shadow:0 12px 40px rgba(0,0,0,.6);display:none;z-index:201;-webkit-overflow-scrolling:touch;max-height:min(360px,50vh)}
-.autocomplete.show{display:block}
-.ac-item{padding:13px 16px;cursor:pointer;display:flex;align-items:center;gap:10px;border-bottom:1px solid rgba(255,255,255,.04);min-height:52px}
-.ac-item:active,.ac-item.active{background:var(--accent-glow)}
-.ac-item:last-child{border-bottom:none}
-.ac-name{font-weight:500;font-size:14px}.ac-meta{font-size:11px;color:var(--text3);margin-top:1px}
-.ac-badge{margin-left:auto;padding:3px 8px;border-radius:6px;font-size:10px;font-weight:700;flex-shrink:0;background:rgba(14,165,233,.15);color:var(--accent2)}
-.ac-count{padding:10px 16px;font-size:12px;color:var(--text3);border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--surface);z-index:1}
-/* RESULT */
+.ac-overlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(27,42,74,.15);z-index:199}.ac-overlay.show{display:block}
+.autocomplete{position:absolute;top:calc(100% + 4px);left:0;right:0;background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius);overflow-y:auto;box-shadow:var(--shadow-lg);display:none;z-index:201;max-height:min(360px,50vh)}.autocomplete.show{display:block}
+.ac-item{padding:12px 16px;cursor:pointer;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--border-light);min-height:50px;transition:background .15s}
+.ac-item:hover{background:var(--accent-1-dim)}.ac-item:last-child{border-bottom:none}
+.ac-name{font-weight:600;font-size:14px;color:var(--text)}.ac-meta{font-size:11px;color:var(--text-muted);margin-top:1px}
+.ac-badge{margin-left:auto;padding:3px 8px;border-radius:6px;font-size:10px;font-weight:700;flex-shrink:0;background:var(--accent-1-dim);color:var(--accent-1)}
+.ac-count{padding:10px 16px;font-size:12px;color:var(--text-muted);border-bottom:1px solid var(--border-light);position:sticky;top:0;background:var(--surface);z-index:1;font-weight:600}
 .result{display:none;animation:fadeUp .4s ease}.result.show{display:block}
-@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
-.company-hero{background:linear-gradient(135deg,var(--surface),var(--surface2));border:1px solid var(--border);border-radius:16px;padding:20px;margin:16px 0 12px;position:relative;overflow:hidden}
-.company-hero::before{content:'';position:absolute;top:-50px;right:-50px;width:160px;height:160px;background:radial-gradient(circle,rgba(14,165,233,.1),transparent 70%);pointer-events:none}
-.hero-top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;position:relative;z-index:1}
-.company-name{font-size:clamp(20px,5vw,28px);font-weight:900;color:var(--white);line-height:1.25;word-break:keep-all}
-.fav-btn{width:40px;height:40px;border-radius:10px;border:1px solid var(--border);background:var(--surface2);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .2s}
-.fav-btn:active{transform:scale(.9)}
-.fav-btn svg{width:20px;height:20px;color:var(--text3);transition:all .2s}
-.fav-btn.on svg{color:#f59e0b;fill:#f59e0b}
-.badge-row{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
-.badge{padding:3px 10px;border-radius:6px;font-size:11px;font-weight:600;display:inline-flex;align-items:center;gap:4px;white-space:nowrap}
-.badge-year{background:rgba(14,165,233,.15);color:var(--accent2);border:1px solid rgba(14,165,233,.25)}
-.badge-inn{background:rgba(245,158,11,.12);color:var(--amber);border:1px solid rgba(245,158,11,.25)}
-.badge-ven{background:rgba(236,72,153,.12);color:#ec4899;border:1px solid rgba(236,72,153,.25)}
-.badge-wom{background:rgba(244,114,182,.12);color:#f472b6;border:1px solid rgba(244,114,182,.25)}
-.badge-dis{background:rgba(168,85,247,.12);color:#a855f7;border:1px solid rgba(168,85,247,.25)}
-.badge-soc{background:rgba(20,184,166,.12);color:var(--teal);border:1px solid rgba(20,184,166,.25)}
-.badge-gpass{background:rgba(16,185,129,.12);color:var(--green);border:1px solid rgba(16,185,129,.25)}
-.badge-cat{background:rgba(99,102,241,.12);color:#818cf8;border:1px solid rgba(99,102,241,.25)}
-.quick-info{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:16px}
-.pill{display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.04);border-radius:10px;padding:10px 12px;min-width:0}
-.pill svg{width:14px;height:14px;color:var(--text3);flex-shrink:0}
-.pill-content{min-width:0;overflow:hidden}.pill-label{font-size:10px;color:var(--text3)}.pill-value{font-size:12px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.section-grid{display:flex;flex-direction:column;gap:10px;margin-bottom:10px}
-.section-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden}
-.section-header{padding:14px 16px;display:flex;align-items:center;gap:8px;cursor:pointer;user-select:none;-webkit-user-select:none}
-.section-header:active{background:rgba(255,255,255,.02)}
-.section-header svg.si{width:16px;height:16px;color:var(--accent);flex-shrink:0}
-.stxt{font-size:13px;font-weight:700;color:var(--text2);flex:1}
-.sarr{width:20px;height:20px;color:var(--text3);transition:transform .3s;flex-shrink:0}
-.sarr.open{transform:rotate(180deg)}
-.sbody{max-height:0;overflow:hidden;transition:max-height .35s ease}.sbody.open{max-height:800px}
-.sbody-in{padding:0 16px 14px}
-.info-row{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid rgba(255,255,255,.04);gap:12px}
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+.company-hero{background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius);padding:24px;margin:16px 0 12px;position:relative;overflow:hidden;box-shadow:var(--shadow-sm)}
+.company-hero::before{content:'';position:absolute;top:0;left:0;right:0;height:4px;background:linear-gradient(135deg,#1B3A5C,#4A90C4)}
+.hero-top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:10px}
+.hero-name{font-size:20px;font-weight:800;color:var(--text);letter-spacing:-.3px}
+.hero-ceo{font-size:13px;color:var(--text-dim);margin-top:3px}
+.hero-meta{font-size:12px;color:var(--text-muted);margin-top:6px;display:flex;flex-wrap:wrap;gap:8px}
+.yr-badge{padding:4px 12px;border-radius:8px;font-size:11px;font-weight:700;background:var(--accent-1-dim);color:var(--accent-1)}
+.fav-btn{padding:8px 16px;border-radius:8px;background:var(--surface-2);border:1px solid var(--border);color:var(--text-dim);font-size:12px;font-weight:600;font-family:inherit;cursor:pointer;display:flex;align-items:center;gap:6px;transition:all .2s}
+.fav-btn.active{background:rgba(212,148,11,.08);border-color:rgba(212,148,11,.25);color:var(--amber)}
+.badge-row{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.badge{padding:3px 9px;border-radius:6px;font-size:10px;font-weight:700;display:inline-flex;align-items:center;gap:4px}
+.badge-inn{background:rgba(232,115,58,.1);color:var(--accent-2)}
+.badge-ven{background:rgba(74,144,196,.1);color:var(--accent-4)}
+.badge-wom{background:rgba(236,72,153,.1);color:#ec4899}
+.badge-dis{background:rgba(168,85,247,.1);color:#a855f7}
+.badge-soc{background:rgba(26,155,122,.1);color:var(--teal)}
+.badge-gpass{background:rgba(46,139,110,.1);color:#2E8B6E}
+.badge-member{background:rgba(43,94,167,.1);color:var(--accent-1)}
+.info-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+@media(max-width:500px){.info-grid{grid-template-columns:1fr}}
+.info-card{background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:16px;box-shadow:var(--shadow-sm)}
+.info-card-title{font-size:10px;color:var(--accent-1);text-transform:uppercase;letter-spacing:.8px;margin-bottom:10px;font-weight:700}
+.info-row{display:flex;justify-content:space-between;padding:5px 0;font-size:13px;border-bottom:1px solid var(--border-light);gap:8px}
 .info-row:last-child{border-bottom:none}
-.info-key{font-size:12px;color:var(--text3);flex-shrink:0;min-width:70px}
-.info-val{font-size:13px;color:var(--text);text-align:right;word-break:break-all;min-width:0}
-.info-val a{color:var(--accent2);text-decoration:none}
-/* EMPTY */
-.empty-state{text-align:center;padding:60px 20px;color:var(--text3)}
-.empty-state svg{width:48px;height:48px;margin-bottom:12px;opacity:.4}
-.empty-state p{font-size:14px}
-/* FILTER TAB */
-.filter-bar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
-.filter-select{padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:13px;font-family:inherit;outline:none;flex:1;min-width:100px;appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 12 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1.5L6 6.5L11 1.5' stroke='%2364748b' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;background-size:12px;padding-right:32px}
-.filter-select:focus{border-color:var(--accent)}
-.export-btn{padding:10px 16px;border-radius:10px;border:1px solid var(--border);background:var(--surface);color:var(--green);font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;display:flex;align-items:center;gap:6px;white-space:nowrap}
-.export-btn:active{transform:scale(.97)}
-.export-btn svg{width:14px;height:14px}
-.filter-results{font-size:12px;color:var(--text3);margin-bottom:8px}
-.ftable-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;border:1px solid var(--border);border-radius:14px;background:var(--surface);max-height:55vh;overflow-y:auto}
-.ftable{width:100%;border-collapse:collapse;font-size:12px;min-width:700px}
-.ftable th{background:var(--surface2);color:var(--text2);padding:11px 10px;text-align:left;font-weight:600;font-size:11px;position:sticky;top:0;z-index:1;white-space:nowrap;border-bottom:1px solid var(--border)}
-.ftable td{padding:10px;border-bottom:1px solid rgba(255,255,255,.04);color:var(--text);white-space:nowrap;max-width:180px;overflow:hidden;text-overflow:ellipsis}
-.ftable tr:hover td{background:rgba(14,165,233,.04)}
-.ftable .clickable{cursor:pointer;color:var(--accent2);font-weight:500}
-/* DASHBOARD */
-.dash-grid{display:grid;grid-template-columns:1fr;gap:12px}
-.dash-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:20px}
-.dash-title{font-size:13px;font-weight:700;color:var(--text2);margin-bottom:14px;display:flex;align-items:center;gap:8px}
-.dash-title svg{width:16px;height:16px;color:var(--accent)}
-.hbar-wrap{display:flex;flex-direction:column;gap:6px;max-height:300px;overflow-y:auto}
-.hbar-row{display:flex;align-items:center;gap:8px;font-size:12px}
-.hbar-label{width:80px;text-align:right;color:var(--text2);flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.hbar-track{flex:1;height:22px;background:var(--surface2);border-radius:6px;overflow:hidden;position:relative}
-.hbar-fill{height:100%;border-radius:6px;background:linear-gradient(90deg,var(--accent),#818cf8);transition:width .6s ease;display:flex;align-items:center;justify-content:flex-end;padding-right:8px;min-width:fit-content}
-.hbar-num{font-size:10px;font-weight:700;color:var(--white);white-space:nowrap}
-/* FAVORITES */
+.info-row .label{color:var(--text-muted);font-weight:500;flex-shrink:0}.info-row .value{color:var(--text);font-weight:600;text-align:right;word-break:break-all}
+.results-section{background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:16px;margin-bottom:12px;box-shadow:var(--shadow-sm)}
+.result-item{padding:8px 12px;background:var(--surface-2);border-radius:8px;margin-bottom:6px;font-size:12px;color:var(--text-dim);line-height:1.5;border-left:3px solid var(--accent-3)}
+.result-item:last-child{margin-bottom:0}
+.result-year{font-size:10px;font-weight:700;color:var(--accent-3);margin-bottom:3px}
+.consult-section{background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius-sm);margin-bottom:12px;box-shadow:var(--shadow-sm);overflow:hidden}
+.consult-header{padding:14px 16px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border-light)}
+.consult-header-left{display:flex;align-items:center;gap:8px}
+.consult-title{font-size:10px;font-weight:700;color:var(--accent-1);text-transform:uppercase;letter-spacing:.8px}
+.consult-count{font-size:11px;color:var(--text-muted);background:var(--surface-2);padding:2px 8px;border-radius:100px;font-weight:600}
+.btn-add-consult{padding:6px 14px;background:linear-gradient(135deg,#1B3A5C,#4A90C4);border:none;border-radius:8px;color:#fff;font-size:11px;font-weight:700;font-family:inherit;cursor:pointer}
+.consult-list{padding:12px 16px;display:flex;flex-direction:column;gap:8px}
+.consult-item{background:var(--surface-2);border-radius:10px;padding:12px 14px;position:relative;border:1px solid var(--border-light)}
+.consult-item-header{display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap}
+.consult-date{font-size:11px;font-weight:700;color:var(--accent-1);background:var(--accent-1-dim);padding:2px 8px;border-radius:6px}
+.consult-type{font-size:10px;color:var(--text-muted);background:var(--surface);border:1px solid var(--border-light);padding:2px 7px;border-radius:5px;font-weight:600}
+.consult-body{font-size:13px;color:var(--text);line-height:1.6}
+.consult-staff{font-size:11px;color:var(--text-muted);margin-top:5px}
+.consult-actions{position:absolute;top:10px;right:10px;display:flex;gap:4px;opacity:0;transition:opacity .15s}
+.consult-item:hover .consult-actions{opacity:1}
+.act-sm{padding:3px 8px;border:none;border-radius:5px;font-size:10px;font-weight:700;font-family:inherit;cursor:pointer}
+.act-sm-edit{background:var(--accent-1-dim);color:var(--accent-1)}
+.act-sm-del{background:rgba(217,68,82,.06);color:var(--danger)}
+.no-consult{padding:24px;text-align:center;color:var(--text-muted);font-size:13px}
+.contact-section{background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:16px;margin-bottom:12px;box-shadow:var(--shadow-sm)}
+.contact-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+@media(max-width:500px){.contact-grid{grid-template-columns:1fr}}
+.contact-item{display:flex;align-items:center;gap:8px;padding:6px 0;font-size:13px;color:var(--text-dim)}
+.contact-item svg{width:14px;height:14px;color:var(--text-muted);flex-shrink:0}
+.contact-item a{color:var(--accent-1);text-decoration:none;font-weight:600}
+.fav-empty{text-align:center;padding:60px 20px;color:var(--text-muted)}
+.fav-empty svg{width:48px;height:48px;margin-bottom:12px;opacity:.25}
 .fav-list{display:flex;flex-direction:column;gap:8px}
-.fav-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 16px;display:flex;align-items:center;gap:12px;cursor:pointer;transition:border-color .2s}
-.fav-card:active{border-color:var(--accent)}
-.fav-info{flex:1;min-width:0}
-.fav-name{font-size:14px;font-weight:700;color:var(--white)}
-.fav-meta{font-size:11px;color:var(--text3);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.fav-rm{width:32px;height:32px;border-radius:8px;border:1px solid var(--border);background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--text3);flex-shrink:0}
-.fav-rm:active{background:rgba(239,68,68,.1);color:var(--red)}
-/* BOTTOM NAV */
-.bottom-nav{position:fixed;bottom:0;left:0;right:0;background:rgba(15,31,56,.95);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-top:1px solid var(--border);display:flex;z-index:300;padding-bottom:env(safe-area-inset-bottom)}
-.bnav-btn{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:10px 4px 8px;border:none;background:transparent;color:var(--text3);font-size:10px;font-family:inherit;cursor:pointer}
-.bnav-btn.active{color:var(--accent2)}
-.bnav-btn svg{width:20px;height:20px}
-/* BACK TO TOP */
-.back-top{position:fixed;bottom:80px;right:16px;width:44px;height:44px;border-radius:12px;background:var(--accent);color:#fff;border:none;cursor:pointer;display:none;align-items:center;justify-content:center;z-index:250;box-shadow:0 4px 16px rgba(14,165,233,.4)}
-.back-top.show{display:flex}
-.back-top:active{transform:scale(.9)}
-.back-top svg{width:20px;height:20px}
-/* TOAST */
-.toast{position:fixed;bottom:100px;left:50%;transform:translateX(-50%);background:var(--surface2);color:var(--text);padding:10px 20px;border-radius:10px;font-size:13px;font-weight:500;z-index:999;opacity:0;transition:opacity .3s;pointer-events:none;border:1px solid var(--border);white-space:nowrap}
-.toast.show{opacity:1}
-/* SCROLLBAR */
-::-webkit-scrollbar{width:4px;height:4px}
-::-webkit-scrollbar-track{background:transparent}
-::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
-body{padding-bottom:70px}
-@media(min-width:600px){.quick-info{grid-template-columns:1fr 1fr 1fr}.dash-grid{grid-template-columns:1fr 1fr}}
+.fav-card{background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:14px 16px;display:flex;align-items:center;gap:12px;cursor:pointer;transition:all .2s;box-shadow:var(--shadow-sm)}
+.fav-card:hover{border-color:var(--accent-1);transform:translateY(-1px);box-shadow:var(--shadow-md)}
+.fav-card-info{flex:1;min-width:0}
+.fav-card-name{font-weight:700;font-size:14px;color:var(--text)}
+.fav-card-meta{font-size:11px;color:var(--text-muted);margin-top:2px}
+.fav-yr{font-size:11px;font-weight:700;padding:3px 8px;border-radius:6px;background:var(--accent-1-dim);color:var(--accent-1)}
+.fav-remove{width:28px;height:28px;border:none;border-radius:6px;background:rgba(217,68,82,.06);color:var(--danger);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px}
+.db-toolbar{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;align-items:center}
+.db-search{flex:1;min-width:160px;padding:10px 14px;background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-size:14px;font-family:inherit;outline:none}
+.db-search:focus{border-color:var(--accent-1);box-shadow:0 0 0 3px var(--accent-1-dim)}.db-search::placeholder{color:var(--text-muted)}
+.btn-primary{padding:10px 18px;background:linear-gradient(135deg,#1B3A5C,#4A90C4);border:none;border-radius:var(--radius-sm);color:#fff;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer;transition:all .2s}
+.btn-outline{padding:10px 18px;background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius-sm);color:var(--text-dim);font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;transition:all .2s}
+.btn-outline:hover{border-color:var(--accent-1);color:var(--accent-1);background:var(--accent-1-dim)}
+.table-wrap{overflow-x:auto;border-radius:var(--radius);border:1.5px solid var(--border);box-shadow:var(--shadow-sm);background:var(--surface)}
+table{width:100%;border-collapse:collapse;font-size:12px;min-width:700px}
+thead{background:var(--surface-2)}
+th{padding:12px 10px;text-align:left;font-weight:700;color:var(--text-dim);border-bottom:1.5px solid var(--border);font-size:11px;text-transform:uppercase;letter-spacing:.5px;white-space:nowrap}
+td{padding:10px;border-bottom:1px solid var(--border-light);color:var(--text);white-space:nowrap}
+tr:hover td{background:var(--accent-1-bg)}
+.act-btn{padding:4px 10px;border:none;border-radius:6px;font-size:11px;font-weight:700;font-family:inherit;cursor:pointer}
+.act-edit{background:var(--accent-1-dim);color:var(--accent-1)}
+.act-del{background:rgba(217,68,82,.06);color:var(--danger)}
+.db-pag{display:flex;align-items:center;justify-content:center;gap:4px;margin-top:12px;flex-wrap:wrap}
+.db-pag button{padding:6px 10px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--text-muted);font-size:12px;font-family:inherit;cursor:pointer;font-weight:600}
+.db-pag button.active{background:linear-gradient(135deg,#1B3A5C,#4A90C4);color:#fff;border-color:transparent}.db-pag button:disabled{opacity:.3;cursor:not-allowed}
+.db-page-info{font-size:11px;color:var(--text-muted);text-align:center;margin-top:6px;font-weight:500}
+.filter-section{margin:12px 0;display:flex;flex-wrap:wrap;gap:6px}
+.chip{padding:6px 14px;border-radius:100px;background:var(--surface);border:1.5px solid var(--border);color:var(--text-muted);font-size:11px;font-weight:600;font-family:inherit;cursor:pointer;transition:all .2s}
+.chip.active{background:var(--accent-1-dim);border-color:rgba(43,94,167,.25);color:var(--accent-1)}
+.chip:hover:not(.active){border-color:var(--accent-4);color:var(--text-dim)}
+.modal-overlay{position:fixed;top:0;left:0;right:0;bottom:0;z-index:10000;background:rgba(27,42,74,.3);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;padding:16px}
+.modal-overlay.show{display:flex}
+.modal-box{background:var(--surface);border:1.5px solid var(--border);border-radius:20px;width:100%;max-width:600px;max-height:88vh;overflow-y:auto;padding:28px;box-shadow:var(--shadow-lg)}
+.modal-title{font-size:20px;font-weight:800;color:var(--text);margin-bottom:20px;letter-spacing:-.3px}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+@media(max-width:500px){.form-row{grid-template-columns:1fr}}
+.form-group{display:flex;flex-direction:column}
+.form-label{display:block;font-size:11px;color:var(--text-muted);margin-bottom:4px;font-weight:600}
+.form-input{width:100%;padding:10px 12px;background:var(--surface-2);border:1.5px solid var(--border);border-radius:8px;color:var(--text);font-size:14px;font-family:inherit;outline:none}
+.form-input:focus{border-color:var(--accent-1);box-shadow:0 0 0 3px var(--accent-1-dim)}
+.form-textarea{resize:vertical;min-height:80px}
+.form-actions{display:flex;gap:10px;margin-top:20px;justify-content:flex-end}
+.btn-cancel{padding:10px 20px;background:var(--surface-2);border:1px solid var(--border);border-radius:8px;color:var(--text-dim);font-size:14px;font-weight:600;font-family:inherit;cursor:pointer}
+.btn-save{padding:10px 24px;background:linear-gradient(135deg,#1B3A5C,#4A90C4);border:none;border-radius:8px;color:#fff;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer}
+.form-section-title{font-size:12px;font-weight:700;color:var(--accent-1);margin:16px 0 8px;padding-bottom:6px;border-bottom:1px solid var(--border-light)}
+.toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%) translateY(80px);padding:12px 24px;border-radius:12px;color:#fff;font-size:14px;font-weight:700;font-family:inherit;z-index:99999;opacity:0;transition:all .3s}.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+@media(max-width:768px){.container{padding:16px}.tab-btn{padding:10px 14px;font-size:11px}.hero-name{font-size:17px}.stats-row{gap:20px}}
 </style>
 </head>
 <body>
-<div class="bg-grid"></div>
-
-<!-- LOGIN -->
-<div class="login-screen" id="loginScreen">
-<div class="login-card">
-<div class="login-logo"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMsAAAAwCAYAAAC/ro7pAAABCGlDQ1BJQ0MgUHJvZmlsZQAAeJxjYGA8wQAELAYMDLl5JUVB7k4KEZFRCuwPGBiBEAwSk4sLGHADoKpv1yBqL+viUYcLcKakFicD6Q9ArFIEtBxopAiQLZIOYWuA2EkQtg2IXV5SUAJkB4DYRSFBzkB2CpCtkY7ETkJiJxcUgdT3ANk2uTmlyQh3M/Ck5oUGA2kOIJZhKGYIYnBncAL5H6IkfxEDg8VXBgbmCQixpJkMDNtbGRgkbiHEVBYwMPC3MDBsO48QQ4RJQWJRIliIBYiZ0tIYGD4tZ2DgjWRgEL7AwMAVDQsIHG5TALvNnSEfCNMZchhSgSKeDHkMyQx6QJYRgwGDIYMZAKbWPz9HbOBQAAAySUlEQVR42u29d5xdV3nv/V1r11NmzvQZSSNZ8qjLVS64gQ0YmxAndui9E5xQEvISuEB4w0sSEhLCDXECBGIg3AC5kAAmEFoCGBv3LlmyNDPqZXo5bde1nvvHGUsWkm3JFrzkc/V8PuPt0eyz9tprPb+1nvJbz1Eiwin57yvj8yMiyjDQvkb9d+z/9MyIAHR3rfyV7786BZZTckqOT/SpITglp+QUWE7JKTkFllNySk6B5ZScklNgOSWn5BRYTskpOQWWE5XRfTOHYtAj++un4tH/F8nOXdv/W8/39oNz8ksFy9BglwIYnUJWLin/0hNMI7NWRudERmatDM8YGZnJBeDhvXMnfSIf3l+V4anHXxBGJqJfmPJs3zt2XG1vHd32uPeNjqUntX8rlq8+NN/DB8aOu+2t48joLPLIeCIj+2af9HOjc/xCxnX1oo7j0teTkpS86OpXysx8k7DUjrWaRqNGW9Hjho9/hMs3nv60gDOy76CsHFx0qI3bN+2VHTt3sXv3Xiam62zfM0O1kVOrzRNFESZL0FoRBh5h4LB0yQCSNVlx2mIu3Hg2q09fzsYNS06oT+/58KflP2++nRwH5bgopQg8lzQ3pAaM0mgUSgu+C22lEv19HfR2tbF+1Qo2nrGG/q52hpYNKICJncPSt2LVUxqX4clY7rj7Xu646z5279rPzOQ8cRyzfGgppw8Nctml53HdZec9btvv+aO/k7s3PcJMPcUplHBwEQVKOOZVox7370qltBeECy84k4FF/Vx++aWcNdilRqenZKi755h9+OCffkr+/Ye3U0tdCqV2kqRGW9Hh159zMX/y3jcc8Zmbb3lA/uWmH5CpAhkBVmuUWBQZnqSgBKMURj21NV8JZJnBxVD0BLI6lz3jbF79shcds+/uyUCmcUqElTKNJEesQ6FjgDiaJ7VPf+N6FCjDk0g9zmjYArnbgfHqpI5HrhSpyonFpWlqGJPgoEA8FC6TNVi/+gyCSsjYfMoyVTyi/S379sv6wScGz2w9pZ55hG2diA4w1mKMEOU5brFIJhYxFsGQodCqQEyFmBJBeYDIhoeAAvBUgLJ937SsHuxWq3pDdYtul1TamGk6pKqCW+rk4Kxlud9NUFnCA2N1CXXK2r6uo57TXukkMy5uWEH5JeLcYp4iWLTK8LVibFax+PRFBB1dbK9ayRfmfc/EsHhYTJwzuGyDAlB+G4kJyd02MqcN6zrMN+aJjXfUO8e5R2qKJLpEqgLEuKByHDHkJIAlxUPkqamxwuK6Bq1zElMncALGpqYf9/6nDZaRGWRsutFaqbwCShnMbA2VN2nE5sTbG2vKyoGiAtg+iWzaupsHN23h1tvvYuv2UWrNBkq7iCjiTBP4PWTWw1qL0iAiiBhQdRwtZM0qd967mWLRJY9raMm59KLz5NWvfAWvumqNWj+4RD2wY4ecc3prB5zYOyx9S49U5vkoY6aRkdbnqdUTMBo3DNGuQ0r1MaOvQARMzia9i8ARvn7TD7DNWc5cvUze8/vXc+2VG5/SjrJ6sFvdsnVO3v3+D7N99ACNFMrtXZg0pxFFtFfa2Dz6Lf7m72/k1S+/hvf+/puP2c6Fl17MjV/9Do28TDWdIHfVE4Llia4aS6AUj4yO8a//cTMf+ouM9777d3j3S5+lAJb1Hb0oNDNhppkxlzRJD1bxAoMnTRpxdrQvtHeM7/zgZiJdJlMlDA4og0OKQwJARgGrnpoaa8lxTEQpsKT1CRb3Fvj0X31T/cLAYh1wS51ktVlS44DSuDqkXPYRHZ74TjJQVLdtrclPf3YP3/3BzWzfsZsoFeLMYrVGe51oz0dEcFzd+ncM2tUo10ErhbUWER+rBL8jRElOLW1SKHShMXz/lgfYdWCOLcNXyatffDWPAgXg54EyPInU05xakiJeAbetA98rkiQZaZaA1oBtuX+OD8oBZclsjjUW04zo71vOlt1TvP7t7+Odb32d/H/veuUJAWZkvCritvOP//QVNm3ZjVPoBtdlrqHQ2kN8h8SGxJnglRbxrzfdzMF9B7nho38krpll5eLDu9pVl5yuhlYPyc/uG0W8NqzWoEBovcdRV+Uc+9/RGIHEKpqNFEcHVKt1PvKXn2J46xb5hz++/pjvGGU59SRBgnZ0WEQT4YnBaucY2umSiiIVh0Q5CA6gUSI45C2rBgcR5ynpriMKsFQbNbo7evn43/zFQoBqj6xcskyddLDkAs0EstzB9QrgaJKkiYddeLnjk4f2VOWe+zZz07d+wIObR2lElmYCsXFwwxK6UEBQJGkCSd5SUg+0n4OJsBZsDoizoLsOOA7GAGkGjk+CR2JTVKGL4f1VPva3X+CBu+7iO//0ocfvmAee76MCj9QYyBLyXCC36KKPK5bc5FgjkKcgPqBABRgNbudSxufnCbwOtA74+Oe/xkyu5O3Xv4K8kbBhIHhS4Kzsb1ef+9a98rWvfRsJerCqCG6IZBnGxuC5ROIi1sctdNKcF267fRufvfHf+Ov3t4A5unuXDJ22XI3OGnnZK1/EAyOfoJYYxD4a53nUd/35q134/2NcRWOSHLfSSZ426Vq8iurUHr76rz9g7fIV8q7XXX3UuynPw3qKjBxMSpLVcAIhs9FR751JinEMRllEAepRAEOuQImAZKin4fenRlEMylz5vMtZtW6wNd4LQNl/cLssWXQ4ePG0wSIWUBYn8DGiwTp4fhEjVUxrJp5Qbhuek3/+ylf54X/9iOm5BknugS7geCVyK4SlElkOcZyDo8ALIAjBarBNrE1AJeApHMdDiZAbwNqFCXWgEIAx5NaAVwSVQW4otAfcfv8WLrv2HfI//+SPueCso51SZQx5XkfSJo6j0F4Ji8EkDTxbJIuraCxa+yjtIUq3ni+t3SaPMnADUiyO65Ckmk99/pvsmWjw5x9483GN8X2jdbnhU1+AoAPrFklSg5ChtEVUiu97pI0a4BOnKV5YwaXIZ774DS6/7DxZe3oPq09brgCGOh2VXXSWLOot0tg5TaCL2AUn/1FFPFbAVFm98LeWYlolrd/DkDyKQWlmJqcplTpJk1k++vFPc/5ZZ8kzz110ZIvKIc5zcLPWXOLh+IZc8qNXft9BKYUDiJgFMyw/tCuohb1FkR/qt6B+ru8aRB8O/Koce+ivltDJuODMdbz/3a8mbwqUWp/ftmOrrDl9nTqpoeMNXSiV1vAUuK6LZGCVRinw/McxK6oiP97TkN/9xNfl2tf8AV/+99vZXTPMuiWiUh9Nr0Ity0g9MAhZ1sR1QWsDto5Hik5TtAFXCeRNlEooeoaCiSjZCG3qeDbGi6v0tofg51AJwHeg2iBo76SeZCRhkQf37OPt7//gsVf1bkdV3IQyddptnU7VpJjOEUiDMJ+nrGLaXEO7k1IwNfxshoLUCFQdTzVwnBhsjOu65JFFex04QR///p27+bOP/ttxjfFN376ZXWMRqVshNaA9wMwQ2AmKagY3OUjRbaLzKoHOyJImMQVSv4e//uwXWD3YfcSkr+3W6o0vuYaCrVHKGrTlDSq2SZDNE+RzFOwcfjZLxUkp2gZFE1OWhJIkFEkIJSaUGE9iaM5R6WgHLeA65FhSUdStxyc//+WjnfbUEhYqkKVgUrCKNMrxHOfnwu81AY0jlsDmlPKEct6gnCWUs5TAgG+gYHNCiSGeougnSFrH1Ya2kk+eNXEUKNE4FNDiY1KLmAzXddEmoj+Y46PvfRVrOlBretWhcfp5oJyUnWX7tJXAB2lmZM0I/HLLsU4McZyy7WBd1iw6nHf5yYP75cavfotv/OgWoszDyUtkmQHlQxAgutDaFZycUqlAVovRNibUoLQlzqr4uUOl1EV/Xw9r129kYEkXS5cPEroO7V6RSnsH82lGoxmzc3iEm+++i9XL1jHeaDJy7zBUCiRRDXJFs2HQhXYOVC1veu9n5MaP/vZRg/TKl1zLZZdeAboA+Gjt4vmaOG7iOM6CjyRo7ZImhp1793H3/Q+x6ZHtGMfDuA5JVkUFIbmxYBWu38Y3v/V9PrK0Td7/u1c9oSn2jW/9kEbu4pU7MVEdY1OKXk5X2eNVr/otunp6+Psb/hd1VzEf18ANcArtRPMNtu3cz388sFNecM6KI57x7IvOxXvfH6Ctj1KajAxxwQ89ojRGK4c0SvG8AkrUodVZFFhlMQhG+Xz92z/ingcewSu1k+VgROH4JXLJ+d6Pf8bDI2+QDSsPR+W062EEcFw0DvJoxODnNpaVfW1qeOmAXPuCK7FSQFtnYc9oRe+sbu1u7YUSBw7uoae/A6vAWpf5Row4HoVCJ9/+7o8wyiVqpmANXb3dzM6Nk85P0dOuecdbXs6FZw4elw/5tMGyulsr33dFa4sXBFjtkMzP47gubZXFKNfnrs3Tcu8d9/Ct7/wn92/fTdW4JH4Bv9BBXE0I2towXpE8jmmFZlyc1JJPTxFaQ7Hgs3xFPyuGBli7bglnrDmdFf2nce6qyhO+5LYZ5PKLT+PFr7qcujgMH5jh4WdP8K1//R77799OWGxnPiti3ZB90/N85aafcsbq9fKuN112RLvXPOuCQ7+PTiO5sazp02pkKpGVPS2fY3QilaE+/9B9D+y7Tibnq9x65z383T/cSJbmBCG0LBaPjq5O5sen+OKX/jeDS9rltddedMQzx8dHpb9/SH3/Zztl5579UOgjrtVQQYC2CaGnuP4tr+G6656LciBvav78rz6J55VaYe36LF4ppN6c5sc/uZUXnLPiiLE5Z82AOmfNwJGr+eSc4EAjanL2ksVqeHpeVnU//hhvnzPy/OddwDvf/VFuvfMhyh19NBoReZzRuaiHeK7J8N59bFjZdTggpCxZloEE2Aw8HaDJUfboxwyt6OMD770eQbOy67B9NTprpOXHaCRxWNt3+G+bx3M5o99Vt+9HvvS1n5AbhzgX8AGrmZuvEvguKMNrX3ktv//Wlx93sOVpg2XzeCrztSpp6uOGoJTGBEUq7W2MzzS546e38MUb/5H56SrdvYMY3Y3n+KQC8XxOUGgnaTRBN1CFEF855LUqRRWxuLPAq1/yG5x71hp+/cq1T/hSW0YmZP3KPvXggUQypZhr1ilXirgImTW0VQqs8vtYtWqARcUS/9T8Elsf2QdB+yGAivL5mxs+zRWXnivnrm0ZryMHJyW2ilpDaMQW1wlor5S5bXhG2goaCFoT+xigAJwz6CoGu1ix7Cq55por+cCHPsKd924hiiKkUGHq4D4wKXvHa3zmc1/i/GecJesXQuYA/f1DCuA73/svyh1dpOLCfIS4LoHrMLR0ER9443MVwNYpkfe/8VnqE3/7KYm1RyYOJmqgSu2ICrnzzgeB1zx5JLL30Ux2BwBPBBSA1R2OGp4R+dMP/AG/8ZI3UpsYx2/rhUqZ2ek6vldg3/jMkdFTETACSqOsg1IunnbR6ug8y+r+rmM+f6jTUTxO8OiMfreVdti6nc/feCOxtIMTgLa4BU0+H6F0youvfR6vf8W1J6TrTxssZ/T7qtzeIRkOtWaCSQ1BexszszN8+M8/zsFd2yE3dHQtY6ohNFJBFxyMsXhhCFZQyoLnUFAGU5+i0xNefNUVvOU117Hx3N5DAza+5zbxnSkKrqU5HyFZSHfHWliyTsWL+/jCvkgohGze/ghdvV3EO/dTihzWrVrOwZ1TrFreQ28KzzlviLnXvwz5wU/Z+tAWmJ2lUC6gajGN5hz3P3AP5669vKVAi3rVS972Pvnef92LDrtROqBareI4Gf/vu6/nzLf8+hNHC+szXLCoS33kj98r17/zfzAsE0S5Igs8fC+kIAXufmgbt/zsfta/6NKjPn//5u00MyElh0oZ4hRRMc951rNboe3xuvhuyLZxV84/90x+cud23KCCaS+QVudJyRnesZ8tB2qyfnHbSachrepSasfomLiS0b94CRMzSSt5aD1whOTngjzK0eA4eAQgmjzP0b6Dq48/cjpRHRWjYFHb0OO+z9e/+rXWDuYoVFhAojnyDAolj/52l995w0s5c3HphMbjaTv4D02K1GoN4jhGREBZPM/DDQvs3rMfr72ToKuf+Vyo5havvQ038EAZtGvI0hptITh5FZ1Oc93VF/GVGz/Gpz7+FrXx3F4Vjz0i2cGfSrb7m+JM387c9u+x5bYvsXPT94mTceY9uHV0t3zh1jt4OLN85b5NzC85jVum5hhRAWrFcr5660NMukVu/Pr3OFiP8YowtG4NlYFe1p53NpQCojwlwuCXy9x6x51HMhSMj1voIs4DorxAZ98Qrt+Dtf6Tjs/aRa3VsaAtN3zsLzBJTFZv4HkBaSOhaR3cQgff/Ob3j6a27KvJ3rEpqs0ExACCG3gkzRqXXHA2I/tnZFV/WQ11uypPalyw8UzSJCJLUwpFr/UZt0A9suw9cPAXxst78MEHUVqYHBtHcqHcXoEwRLSi0tnB6NRh3pe1Fq3cheSxICbH2qMd/MeTmckRcVKDzgzj0yOyb9/RJM7Pf+2Hctttd+IFBXAVkmXgOBA1iOuTvPy3ns/FKztPeOF42jtLqahwvQK6KYSeT4ymXpsDleOWAhpJBLkBJ8DrKBJnDchz3JImiWapFIrYdJ5nnH0ab3rtS3nD888/9BLx5HapztxNffIh8qlRVDJFMUxosw6qtJLy4CA7CgN8/eF97BAfO1tln3FpLxa5ZyKm6KYE/YNssQ32b32E8y68jE98/1Ze8rwrWbYEzlixhr09NcbmY+Ye3oqgmIimeWB455EhTOWgxSX0izQjQ3O+RhZFpM3k+KOGvYHaMolcfN4FPLhtP5MTNZy2dqJmjc5KL/c+sI3Nu2I5Y3l46P23bt/NdC1BFSqI40DcJCiUKVZKrFjaw8olhyd8w7I2tWXtCikFLtUsI4oaUCoSOB42ydg2vIOrz1/9+JyzPWOy6jGUnOEJZFUfT6pQP7h7WD79uS8yW03o6ltMI9HUp8ch9LBpzNLFixnqOdxPmxscV5E1U7R20Z6QmQTRx5cr6ep94iowW0Zn5a//5vPExgG3lVAli8F3wVGsP72Pa6+57Cnp+tMGSxSB63rkeYzJM8JiBaMhSevkeQaeC2EAsSGzOeQJaEMQFsnjFG2Fd//+b/Oylz6bVRWtjmx7PztGbqFddtNpJwip4luLKxViNyQr9PFgw+PBqrDqvHO4+d57SW2IzSEI+4jiGnWBoKfCgalJhrRP0rOIXZGwCMXZG1bywH/dwdL1G5mbaMKBvdggZ2w2YtuElTV9rf4opYjjGK9UwdocA3S0h5RLwQmNla/gimdewu13/yNOUMRkgFcktkKQa6YmZ2H5okP333X/w1gnRLQHngYl5HmTVSuWcOaKo1fG1UNL6WwrEdeFJI3AcUkiwXU0Y1PzT9i3v/3UjeTKE9El0kzheiWiKBLXddFYFAZUjiiLiMUqi0Vx8813Ml8Typ29TM9XCQrt4EMYKsquz9Le7iMXHq3xPI9M54gWPFeTRVkrKnYS5AN/egMHZsF4FVIjoAXXV5hGnc6S4i2veyndZe//H7AoBVjB8zyUuERJjPa9VoZ9gQ3q+AFmZga3t41cCaQNojTB9TR/8sEP8LYXrldbD4wLlf6WTXpwi/QtWq8a6SyJTCJykE63jm5M4LtlmmkbvQNncsAO8KNH9tOz/iy6OuD5F17A/JRhaQXU4CLSdBHLPBhcs565lTlt3S4rz9/Ag5u3cv6idZx+uodza4EkKrD87MvYNfU9pJ5Rb1bZsfsAa/oGF8ywHC/0aKQNdOAChszUSLLGiY1VnrNu9RDYFNcpY1CgXbLc4OEwM1MFDoPl9rseJJcWHQXbUiZJm1yw8VnHbP/s0ytq+dIBmdy2v8Wc8jywDkFQ5uEt2x63Xw8fiOWm799GI4WcErn4uF6RNLfoBTqPxmCVRZRdiGo9SkYskSGYzIXAwWpDoaCI5sZ43etfxPpF3hGgdpUmy5IWy0FbEpsRFBxikzwtPRwZq8tNP7ydn9y3k8jtJjEGXIUjBhXPUybjmiueye+99Iqn7Lc9bbB4Tiv/IWLIrUWkRXLELiApjTCpwe/tJ52ahVIJ5bdj4yYYl107djEysV7WLe5XAPv23i+DS89VE2ObRByFdRIwETqv40sK1uJQwPEWE0sX2/Y8gNIdOJFi77btRHWP9soz2Dk6R7kYMqcD9h/Ywb6shhP6rB1cRm3qAGm1i/6+ftrLAXPGxy8Kqn8xUp1ABSGzs7PA4OEoDi658kB7KFJy62BO0OMbGnDV/umyuNqQq7SVDFcBeZZgDdQahykfD+9OZN/4LNr1wBrILZASuIbzz13/uM/YePY67np4tJUdt60cRpwYxidmn4DfFxIbhxwfq0utqwqJlVkAqQXlLvR34UdYUHgf7bt4vkc2cZBMG6TocdppA7zptS8+xsMEYwxohTxKX4FDIHxKQNnflH1zOR/6y8/SlB6sXwRlcH2Fm1Xx8oR1p3Xxvt97EyO7JmXl8t6nBJin7eBrBUoy7KN0BaWwOC1SFRqcgEKxnbyW4hU60SZAkhDtdqN1hW/82w/Yv7fG6ERNAIqFdmpzo2KtT2Y1meNi/IBIVCspmPuItKG9PkxeorfYTk8YQJ6RmRRbcGj4sDuuMlydJUJBoZN5xyNzNGGjQX8Ww8x+2jCUwwxXNQkLimWnLQLHoMho1OYOU3pwyFQAqgSUEdVGosrkFE54vMrtHqgES9Si3YgFY3FcRZqmh+7bOrKHgxNzmEd3FaVRxtDVFnDeE4DlmZc9A9+xOGphel2FyXN275vivp21o2yd7ZMNUS44oYcOPHIlpCYjztMWIjwFvm6tit6CH+C64PrgtJK0NrVkUQYdXZT6ugl8zate8RI6yo+jcMa22lG2ReJULCQ9T1we2VeXmcThTe/4EBL2I4Vyy6KpxzgoJIlY1BnwuU/+Ga6Z5lGg7BrdJ790sKiFiIZIa7XA8dBOywxTShO6LtHMBE6eUHQ0KjMQZSgC8lQzMd3kPR/4E3DaWg5cz5CKYsvA4jUqSSHVLqnn0dABSVAmFZdcNGphcIfWr6F7cQcdvZ30Lu6l0lNhvgl+KUAHHvPNGEtOR3s7a1auYv2GftavO4ehZaeTNJqkeUqkUjJH6FjcA+UijbRJEBy2a9Wj/xUHxAPbMjmfyvKUJA1yyTGStygiC5wxVwtB4TBL+8e33k1iNdZaUIZiWMQTYc3pS1i32HvcR29Yu4LuznILYI+CzHOZrzW55/4tR+cyekvKZgabGdI4weYG13FxXAftapAcbAY2WbialrKbhfbjJrpUgnoVr1CgMTVDoxnzxS/+M1Oz2THMdtVijCu9wN97mot1qcwbf/c9HJyKaaYe0oyADNoD0qhKyTP83d/8GRuGOtTKFYcDGMuHBtUvHSxiDUpylFKtGLpWWGlRgLWkqLxO2c15w0t/nXXL+wlVQqHsYUwMrk+uQx7ZNclnvvIfbJpoHXftG1il9uwYlq6uHiIrVB2fWb/CXFCh6mhSJyXPxnG9Bpv27+bmbbtQ7T7tPSX6e7sZWgwXru/nmWf3cPH5IcsHS5xW9Mjm6/xkS51/f2iYWHUQpUXGo5S6q5nXkJfaUD095FlGZ1/XY6jcFt9IS1GswTE5xTyjkGcnPF4HDk7ieD6CCzggFlcLWdqkra106L6f3nE3bljAYiDPcBEcm3PpRec+cd5jkVJrVy/HkYUdKY/xPAfHKXDrrXcd8zNZLaGkQ9wMisqlzQ0oWHCimCDLCPKUQpZSyGIKWUIhzQjSHD9NCIsutjGF291JNjtDWOkhDNqYmK7y2Ru/eAxefAswWrtgNEjrbMyTqeK+A4/IgbHDYeLt+/YKwF/d8AX2TtaJmimSLQCblIKT4aTz/D+/92ZWLOs9KcGDp+2zrOxylQJRSqHQCwzuHGyCUjGh0+TNb34Fr3npb7Jp817e88cfYTqeA+XhFIqoPCSzlk987stcesUzKKpAhnrLatnpq9TevXskd6CuwHdDtGSU/AwrEc36MG2cxeoOnz07JpBqOwd37KIWFejovZgtD+zG5Anuym7G9+2gGmWc/YxLeOjhnXR19RBlMFvPqCcZ1vfJjEMuirbOTqrFIr29vUfsniiLxmIXIkOKHE16wuO16eHtuG4ZyV0Qt3Uc2aSAoVJp7a537Yhk554xJOxAkSEmJ2tEFB2Hiy44h9EDkzK0+PHt7gvOO4cf3bUDJRpJmogXEAQlNj08fMz7Owrw6hf/OrVIyN1iyx8zAuQ4nkVJjrOQXFTigngIPkYp/u2738ZzFLXZcVSxQlyL0K7CZpof/OQ2Nu28Ts5ccZjIqbTGKnCMbtlf0iLdPlkwbHDxkQyO1YNL1T98/Wb5+rd/RHU2odS3HGOEJM1RSR3HybjkkjN44W88m5V9qF8JsDy6tR5eGQSUASenGBqufuYFvOHVL2BdP+rMpUv5r1vPki/d9F1wA4wp0bQViFJUd4kP//UnuPEj7z7UbnspxCt6RGjmPQexGU5o8UyN+Zn76aqv5R0brmG5cWmOzdKROTTzBQq2l+M7UCl2MdbYQZbEBEnMOZUCV6xfge/DPVu2IQZC0VirUZmlo1ShsmQZHeW2x7ygxSiLXWB65wKZMlh9Ymbv1n2R/Oz2B8glBAla/Cgb42pYNNBDR1cFgLvv24xVDpmxrfyDq5Eso7OrjeWDAwwtKjzh5G/ceBa++y1iA3iKPE/JtWJyapafbT4ol55xJG1+aLCoPvw/DtNhRqZFVnar41KwV73yefLyN1xP5Aq+o4lUAFbhFUOm5sfZc3CSM1d0PzZ2DKJaFpjyURKjhdZOeCI0q5GafOqTX6YaaXRXP43GNOQZbcUSaRLR1ebwgT98yxG8sadt8p2UVkzLh2j5EQJaUwhcKkWXP/z961nXf3hy33H9azh9sIfQt7T4/Bm0VZAI7ntwhG//xy2PadYlLPYiThuRFzKvNdXQo+ZbJus7sfEuups7eN5pXSw1lt+66FIuP2sDXT4s7fNZvqidZQOKocElvO43n0N3VuXS07oZ8CAxcOfm7eQqABS+KBybUXIdli/qY22vqw47+EeEc1ohT1eR6hObh5mq4cHNwySxXeCjacgzfA+WLl9EuTNgpIrc+8BmwkKFPFVIpgnDItoV2juLrH4SoACctmwQz3FwRfALJcQIzTilmWaM7Nnz5NbCcQIF4NLVBfXOt76RgmOQLEYw4GiyNMVxHManZ35uYRWQfOEYuEaLxrEKK8ef+9iyK5Hv/eRutu2ZJNdFrCiUq3BdwcRVCjrl2l+7nGdv6Dup9J6TAhatfByrcYzgicbNcnQc8T///CMU3CNV7ZylZfWhP3wfzKe0+WWU40MzwaFMmS7+/oavct9Iq5SQCbvp6zkTybrBKVLXDlNOiYOOT6PN45GDD+EVpyg7E2wc7OfAHXcxSIOph25jZUfMoraI8QNTeOkszUc2s8LOc2a/R9mHO+7dQaQ7idwiqeuhlcU3MSUiLt24ga1jh0soGQ3KWHzttk5gKgfjaBqOf1zjs208lvv3Wnnvh/6caiMntxrH83BNTmepSL02xwuuu4rVHaipumVkzwFm5xq4fhva6yaOhdzNGdoweHzzoRVnrBvC04LKNeSaXIP1He57+BG2TZ3cUkjnn7EeF4MxEUHJxaoEpIGnDNVq/ch1NWoQaos4giiNthplfSwBI7NPfuRxeApJigF//b/+Benobc2HKAQXx3HwfYurY17z8heedFrP0wbL6MxCWuVQksriSI4Wg5aUdQNH12Q674xVvO4l11Gb3I8XWFTZw9MO9WpMnHl86M/+DoD5huK0JeegbDdRpCh09jKZ5EilQt3LGGvuZse+H1Eq7ea8wXb1G1es5qy+gGev7GeDm3Jhh2KVX+XFl6ziqvWLuWTNACadZnTffm5/ZJRpPBLHJTU5SVyn5Cl8Sbn6ystZN9ChRscPLmQCdctZNjkkCaQJKBflPTFYRibnZHjGSCQhb3nHe7l30yjKLREGJZQYbN5kbnw3F5+zhiuveAZ3HpiSwNNs2bKFjko7eRRhGxEojZCwdMViHpmZelKFOmMAdfF56yGtYtIELwhxHIdmErPpoa04jntytUj5GAHX80jm50Ey2tsLNOrzFIMj6zC4CrSyrRyczdDYlj+kjnVKE6b2HVn/LFfw9zd+hbGpWZI0W/CDFK4Ck8TkcZ13vu2tXLC6+6STRp/2qBkFuWOxCow2CBpRBlF5y3c5VnKuH/X611wje2YO8N2bH4RSN3Hu4AQaqxU333onf/SxL8ufvvuVaiyOZP3QeWzdPoc1NbygyFxcx/EU1pll+65vk9ox9jj3Sm/fRnqdAS5ftlY9MrdX1nYsVQeqIxKY3SQSs310koME3HT3bvZID41ymVQMZdcj9CCLG1z13GfT3+8v9LNl21vJcREQwYrFAgXHxUYRw7OxrOoMj5qYTQerUm1Yvvntb/IvX/s2RkL8QhfVRkboQp7kdJY8+isV3vWmF3FmV6Ag4O/+93+KZ1Ka0QwFr40gDImTGEfg7PVnIfb4CIeXX7Caz362AUbheBVyq1DWY9umh6lOTkDnwElRoDtHUvnjv7yBTBdRYRtu4JBnMUnSpBB4DPQfGYkSEZTIQiEcg1IRSkVomqzqONK/qE6NSM/g4W8027JnTr7xvZ/xlS/9C4VChSjJ0SrGxnkr9eMorn/dm3npb/3mCb3D8GQmq3o99YsHi24VmXs0uGFaLIZWwumx9vrkiFgDPQMtItxFa/rVH7z99XLLQ39IvVkF61ModxHXmnR1DHDDJ7/MZZeeL8+/+Axlu2uycsU8j4zcjFdsJ8ozXAcKoQs2Y2xiC410N/vGR+murCef3yZBZtgzcYeImWf/3Az7m4ao4zR+tLPJcNWlWgippRkl1yPMa4R5kw2nL+H5z11J1Dh8Fnt0al7EKjztYCz42kOUkMcxW7eM8vXv3Ezg5OK6PrnA7Fyd4ZGdPLRpmJ17xjHGIyx0MF+tUyhVKBQKJFkE2uIo4W1veQXXXn24PNKdd9xHkgoWwfM0c9U5lGPpaGsjyQKGd8+ye+eEZHWL74Q4XohWOS41sDWedckzFMDVlw6pxQMdsnPctlZgp0Ax8KjWa9xz/2Y2rj4SLH//2a9IPc1x/BLKDYiSHBGFu0BZUthWTk3ZQ3ObE3DTf97B1pFxIjyYqVJatIR8ZhLjZ3R2trN82dIjPb4sbfkrSiGOWiiYIWiOPoPf3nMkafK2u7bw0Y99ChW0Q+4Tei5a+aQ2wXNhUV8/Z268iHs27eGhTakoSdAY1MKpe6F15B3RyKPF+ZyA3KTcZRIph+CYiGuec9EvpsieVdCq6SeIUoczsY8tEgCIVfQMHHn+4Mr1S9WLXvBs+af//V2U4xNnKXmumU9cVNDPP/7zD3j+xatpNjpZvvwSpmenmKlupdzmU2tOoqxLQXWDdXADy3y2neb8TsYmFB1SwBNFLhE1VWA/vUw3y2yplZlQ3UhYgLxOIa/RkeV0eppX/+YqzCxsHDjs4A71VJTreqK1Sxrn4Ljg+ST1lHvuGeGOWzdhspw0b+2qaA/HDRHlopzlaN+lmeeEpRJRY46g7FIuQjOa56UveRFvf9PhI8VbJxJ5aPsYs6mHX+6giUaVy7iuy+z0NO/6o78ijsbobCvRrCUEbgnExSPDk1kG+wvc8f3D596H1q9hZHqENPbAbcNi8QspP77zYX77ZVceuu/u0Xn52Of+lWpkqMcKJyhhlUdmclxHtRRuwVTSohdUT2OUQxpL60h4WMLrK9PYvx/VVqTipVx4zlrOOu3IUr4igkYWSvG02B4GD8sTO/g3P9iQP/3YF3GKS2jGgiYkTxU4GlEBtSiF2Yzffc+HSZs1ysWA+bkp2sqt3FWLJbBAsRG94DZYsqRJGCo8E+MS8dqXvZB1a9bK0JIOdfId/Ec5QrQiG61YvG7h8DH1nLr7j31Q58XPv4qBtjJETfIkRRdLNJsGG3bzkzu38Y3bx2Vl71rVrS9U61dfwaLes8lqRcgqkJZIE0GUIG6NYkdMzgF0ME7CblJ3jHmnStbdxkzYy39umWZeLaYhHZjM0q5y2qNJlvsJ73zZ1Xg1eOYAanhi/gg7WRRkWFJrMMpFOz7Kb2N6LiHKQnJVwSn045UW4YS95LqdTIok1iVqZgiK3KQERY0rTcjnePXLns873/rSI8YiNR7bRvbiFtrIsFibIVkMWuF1DdCoCYYSc6lPM1LMxprZxGUm9piYF/YcmGf7gcM1mM8//1ysMguOQkAeWawq8uCWUUZnk0P3lXsqzDYzMlUilSKRLZM4FazfRarKxKpEpAtEqkhDF4hUGxEVUtoo9Ay2qC8CWdxEdZTRJsJXOb/3O0dXr/FcjdYam6ULi60m15onK1764Y//A3umG2RuCTeskKUWHAcxBkd7+KUycW5pTMwhYYWGKuC2L6EuJepSomHbqFGmbhd+lxJNKRK099JMBOsW8AsVXviil3EsoJwkugsL4b9WZMO1Csc6ONZB2ycPB16zcYV6xZVX06ZdQq1RjgeldqJqwmzu88kvfJ0HJpDR6WkZbLtSrRq8jJ5wAwPhGYTSQ1BUWH+WzI7j6CaueAReB8bzqWmPMVtmZ9zPPbsHqMnFVJuL6GtbjkzMsoycSxZ38NrLz2ZDJ1zW07KZV/VV1I69I4eUKTGtIgm4HtZ1yZSDW6jghC2fJ7EJiWnSzOvEpk4uNaxqILqJV7I4bhOTzdDVrjHxGG99/XW8711vYE3nkTb68JZtONrH5gbPBUwD5WVkjVmy2jygcN0ieWKgvZOgowuCAk5YpFLpRYvH5vs3tzLcB2flvLNXU/RiXCcBG7VO4lrD5PgkYwfGW7vZeE2UAd/1cLRHWKqgdAiptGzqQyuiLFxUq7KidcE6RJOT4DkLFWcSZHaMAgnvfudvc9mGo48ROCi0EjAZKDDakjs5RhtGqkcX3n5kBnnPp74nP7nvfqRUIsKQJPMEXSFCjO8JkjexaZOsOovf342IkFbrpNZi0Id+RDSCOhSREgtpmpMbi7XC2972di5a+/iHwp42WBwBVwyuZHiS4VmDKwbHWpzjJMf9zqteyYreTjxyTGMOdI6/uA+bxNxy293cdNNPGOpuRTcKagmXnvubLOk8C+Iu0qRAFC1UVskSxIE5Y6l5A0y6q5nwNvKjLS576gPUkk48KWCnJlhTDrhocRevfe4zuW7NCrXSP1JxT1962F42plWjyw8UqJQ8qpJlrZOhoV/C90po3BbVi9Yxaa0zXJ1g0zm0rdFRFqYPbudjH3k/b3n1b2FrE0dHFncfQGkfPyhhTAaegKT4rqAQQj8A00r1eEGBZGoSxJIkKZkoktxhy5bWwbXVizrVsqWLCENQKoK8TlD2MCI0Gym7do8BsK6/TRlrUUqoVqtYs6AWVrV2DJwFtqxauDoLxy+cluoXAjQpTt6EeJbujpB3v+2NXHPlpcc226WlupistSA8qoaiD7Hwjogo7jrIP3z2C2g/xAlCbJKAp0njBooUIQXJyfOUcncnaZpikgi3o73VrnYXfjRq4UfrhRqNStA2p+S7rBtawa8993JGJ4z8whz8NZ0oN6tLyXFoNGJ8r0Cx4NOoVdEqP642Vq1y1Aff+w55yx9+sFXRUSlMmqCDHB/L5z7zGa694lw5Z1VFdVZa0ZFFXSLdncvYPHoH8/kOavEj5NTQZUXDFtg3tYg9s8vYOl4h9ZaR+R24YgjjA6zpLvG8M9Zy2doBziw9eQLO9zRpUkVpcFWGDTR5XCcsdZDVNco4eK6H8ixZ3iQ3MZ4PpYJDZlJ8lXPZhWfz+ld+kOuetX7heUczljcP7yUodzFTawIRquQheYIxCscpkKcG6wCORxbVoRS2yJieQzWK6AnaeeDhw6c8leex/ox1/OzeYbI8IjUe2IxCocTNP3uAiy65UKwSDEJuDeVKJ9V6DGHY2oXSGFz7czb3QkVKBUpyPIlwTELSqHLWmlX87hteyVtffP7jjmlbqUhcnycs9hHXq61sv+9TctvJ60D7kfe//70fIvDK1BuCTRIc12vRb/LWtyWkNge3BbR63GwlegOPPE0OY08O+0sta8i2vgWAFN9JCXTGu65/A0XHMtTn/OJqHY8cmJPOklCbnqKzUEFURGP2IB0dPg7RcbdzzhmncfVzNnLnlh3sGT+AaSraCiFO3CRuNvn03/4tn77hg49h7xZYctq5SnltMhfvYbq+jOnmbqZqM8xVAybHQqbmPDrC5dTikAoJQ4PdnL98KRsGOhgMYEPpyakQw2Mz0lnyaQ8N87UpPD+kWCxTz2oQJ3SEfWSpYCVGW0PgGfwyVCoFOitFfu2qF3LhxrP4tQuWPuGzHtpTlamDe8ga03SWSijPZ646TsnVKMKFXdrBSIYVgxFLrh3yVOjq6gWtiKbHmB0v89CWeTlrfUW5acJzLjqLH//oh4SFXrSNEUnxTMaDd98J8etZNeCr27buk/42j4MTk7T7nQTFnDhJycUgJGhpHVto7QEOkGBV2uLKZTNcfOFZXHXFs7nsGRu5eN3jV4TZtmtMGvU5Qs8B11LwPMQIxHUCm7B28WPKHY2Oy8/ueYjq1AHyzCUwPsr10QKSpyiboDW4jteKcNEKPIhqnet8NGfTKmD+qFctaLELJz/BIYMk4rnPuZSNZ5zOyoEnpmSclO9nOQI8Y8jKAdToeCRD/YUTSgw9sPOA+G3deIUAclhVOTx4u0YmZPnKY9MXpudGRUvcOlikPHq6WrvP9losTRtiVOt0c8GBVcGJc4U2756QM0478tnDU1ZW9bQGd2QWsTbD6hwhx9oU33FZ1VF5Somxh3chXjFl9c+VVzrKbJs2YlyHNLb4mbB60Dlpibgte3JZv8w9rvZGJq2s7D1+7s+2SUQHEMdwZh9q5KCRlYuOv++jcyJDHUdbBKPTRuTnPAslrTTGUPfTH5uTDpZTcuIyvXebdC9dc9IUfWZ0r3QNHbmT7dk7KsuWDqlftXcf3j0vq06r/Mr1a2zXqAwsP3K8fiXAsnNiRFb0rVSnYHNKfpXlV+Lbik8B5RcvBx4TCt+xa/iUOfHfFSwnKjtGdp6UyZ4+MPJ/jdIsfkwo/PTlq37lF6eRfQfkFFhOgpy+csVJmewgUMxNj8jszIhMz/xygbN/ftsv5Hm7pp/6rjEy9stV0Gj/0X0dnZwUgJWDi3/lAP1/ANefdQWkeSKhAAAAAElFTkSuQmCC" alt="KODABIZ"></div>
-<div class="login-title">KODABIZ 기업 DB</div>
-<div class="login-sub">2021-2022 회원사 기업정보 조회 시스템</div>
-<input type="password" class="login-input" id="pwInput" placeholder="비밀번호를 입력하세요" autocomplete="off">
-<button class="login-btn" onclick="tryLogin()">로그인</button>
-<div class="login-error" id="loginErr">비밀번호가 올바르지 않습니다</div>
-</div>
-</div>
-
-<!-- APP -->
+<div class="loading-screen" id="loadingScreen"><div class="loading-spinner"></div><div class="loading-text">인증 확인 중...</div></div>
 <div class="app" id="app">
 <div class="container">
-<div class="header">
-<img src="data:image/png;base64,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" class="header-logo" alt="KODABIZ">
-<h1>KODABIZ 기업정보 DB</h1>
-<div class="subtitle">2021-2022 회원사 기업 데이터베이스</div>
-<div class="stats-row">
-<div class="stat-item"><div class="stat-num" id="sCnt">0</div><div class="stat-label">등록기업</div></div>
-<div class="stat-item"><div class="stat-num" id="sReg">0</div><div class="stat-label">지역</div></div>
-<div class="stat-item"><div class="stat-num" id="sCat">0</div><div class="stat-label">품목군</div></div>
+  <div class="user-bar">
+    <div class="user-bar-left">
+      <a class="back-link" href="index.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5m0 0l7 7m-7-7l7-7"/></svg>홈으로</a>
+      <span class="user-info"><strong id="userEmail"></strong></span>
+    </div>
+    <button class="logout-btn" onclick="doLogout()">로그아웃</button>
+  </div>
+  <div class="header">
+    <div class="header-badge"><div class="header-badge-dot"></div><span>KODABIZ 21–25 | GEAR-UP</span></div>
+    <h1>GEAR-UP <span class="accent">위키</span></h1>
+    <div class="subtitle">중점지원기업 DB · 컨설팅 이력 · 수주성과 관리</div>
+    <div class="stats-row">
+      <div class="stat-item"><div class="stat-num" id="totalCnt">0</div><div class="stat-label">전체 기업</div></div>
+      <div class="stat-item"><div class="stat-num" id="consultCnt">0</div><div class="stat-label">상담건수</div></div>
+      <div class="stat-item"><div class="stat-num" id="favCnt">0</div><div class="stat-label">즐겨찾기</div></div>
+    </div>
+  </div>
+  <div class="tab-bar" id="tabBar">
+    <button class="tab-btn active" data-tab="search">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>기업 조회
+    </button>
+    <button class="tab-btn" data-tab="favs">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>즐겨찾기
+    </button>
+    <button class="tab-btn" data-tab="db">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>전체 DB
+    </button>
+  </div>
+  <div class="tab-content active" id="tab-search">
+    <div class="search-section">
+      <div class="search-wrap">
+        <div class="search-box">
+          <div class="search-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg></div>
+          <input type="text" id="searchInput" placeholder="기업명으로 검색..." autocomplete="off">
+          <button class="clr-btn" id="clrBtn" onclick="clearSearch()">&#10005;</button>
+        </div>
+        <div class="autocomplete" id="acList"></div>
+      </div>
+    </div>
+    <div class="ac-overlay" id="acOverlay"></div>
+    <div class="filter-section" id="filterChips"></div>
+    <div class="result" id="result"></div>
+  </div>
+  <div class="tab-content" id="tab-favs"><div id="favList"></div></div>
+  <div class="tab-content" id="tab-db">
+    <div class="db-toolbar">
+      <input type="text" class="db-search" id="dbSearch" placeholder="기업명 검색..." oninput="renderDbTable()">
+      <select class="db-search" id="dbYrFilter" style="flex:0 0 auto;min-width:100px" onchange="renderDbTable()">
+        <option value="">전체 연도</option>
+        <option value="2021">2021</option><option value="2022">2022</option>
+        <option value="2023">2023</option><option value="2024">2024</option><option value="2025">2025</option>
+      </select>
+      <button class="btn-primary" onclick="openAddModal()">+ 기업 등록</button>
+      <button class="btn-outline" onclick="exportCsv()">CSV 내보내기</button>
+    </div>
+    <div class="table-wrap">
+      <table><thead><tr><th>#</th><th>기업명</th><th>대표자</th><th>품목군</th><th>소재지</th><th>선정년도</th><th>상담수</th><th>관리</th></tr></thead>
+      <tbody id="dbBody"></tbody></table>
+    </div>
+    <div class="db-page-info" id="dbPageInfo"></div>
+    <div class="db-pag" id="dbPag"></div>
+  </div>
 </div>
 </div>
-
-<!-- TAB BAR -->
-<div class="tab-bar" id="tabBar">
-<button class="tab-btn active" data-tab="search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>검색</button>
-<button class="tab-btn" data-tab="filter"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M7 12h10M10 18h4"/></svg>필터</button>
-<button class="tab-btn" data-tab="dash"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>대시보드</button>
-<button class="tab-btn" data-tab="fav"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>즐겨찾기</button>
-</div>
-
-<!-- SEARCH TAB -->
-<div class="tab-content active" id="t_search">
-<div class="search-section">
-<div class="search-wrap">
-<div class="search-box">
-<div class="search-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg></div>
-<input type="text" id="searchInput" placeholder="기업명을 검색하세요" autocomplete="off">
-<button class="clr-btn" id="clrBtn">&times;</button>
-</div>
-<div class="autocomplete" id="acList"></div>
-</div>
-</div>
-<div class="ac-overlay" id="acOverlay"></div>
-<div id="emptyState" class="empty-state">
-<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
-<p>기업명을 입력하여 검색하세요</p>
-</div>
-<div class="result" id="result"></div>
-</div>
-
-<!-- FILTER TAB -->
-<div class="tab-content" id="t_filter">
-<div class="filter-bar">
-<select class="filter-select" id="fRegion" onchange="renderFilter()"><option value="">전체 지역</option></select>
-<select class="filter-select" id="fYear" onchange="renderFilter()"><option value="">전체 연도</option></select>
-<button class="export-btn" onclick="exportCSV()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>CSV</button>
-</div>
-<div class="filter-results" id="fResults"></div>
-<div class="ftable-wrap">
-<table class="ftable" id="fTable"><thead><tr><th>기업명</th><th>대표자</th><th>대표품목</th><th>소재지</th><th>선정년도</th><th>사무실</th><th>담당자</th></tr></thead><tbody id="fBody"></tbody></table>
-</div>
-</div>
-
-<!-- DASHBOARD TAB -->
-<div class="tab-content" id="t_dash">
-<div class="dash-grid" id="dashGrid"></div>
-</div>
-
-<!-- FAVORITES TAB -->
-<div class="tab-content" id="t_fav">
-<div class="fav-list" id="favList"></div>
-<div id="favEmpty" class="empty-state" style="display:none">
-<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-<p>즐겨찾기한 기업이 없습니다</p>
-</div>
-</div>
-</div>
-</div>
-
-<!-- BOTTOM NAV -->
-<div class="bottom-nav" id="bottomNav">
-<button class="bnav-btn active" data-tab="search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>검색</button>
-<button class="bnav-btn" data-tab="filter"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M7 12h10M10 18h4"/></svg>필터</button>
-<button class="bnav-btn" data-tab="dash"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>대시보드</button>
-<button class="bnav-btn" data-tab="fav"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>즐겨찾기</button>
-</div>
-
-<!-- BACK TO TOP -->
-<button class="back-top" id="backTop"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="18 15 12 9 6 15"/></svg></button>
-
-<!-- TOAST -->
+<div class="modal-overlay" id="modal"><div class="modal-box">
+  <div class="modal-title" id="modalTitle">신규 기업 등록</div>
+  <div id="modalBody"></div>
+</div></div>
+<div class="modal-overlay" id="consultModal"><div class="modal-box">
+  <div class="modal-title" id="consultModalTitle">상담내역 추가</div>
+  <div id="consultModalBody"></div>
+</div></div>
 <div class="toast" id="toast"></div>
-
 <script>
-var PW='1234';
-var ORIG=[{"n":"㈜로드인터내셔날","ceo":"홍성훈","cat":"","prod":"철강 및 건설 장비","loc":"서울특별시","year":"2021","off":"02-563-6161","fax":"02-563-6162","mgr":"차민경 과장","ph":"010-2207-7640","em":"mincha@rico21.com","hp":"www.rico21.com","adr":"서울특별시강남구 밤고개로1길 10, 15층 1528호","cn":"태국, 호주, CIS","inn":"-","ven":"-","wom":"-","dis":"-","soc":"-","e21":"","e22":"","e23":"","e24":"","e25":"","e26":"","gpass":"","mem":"","un":"","assoc":"","tech":"-","vend":"","consult":""},{"n":"메디아나","ceo":"길문종","cat":"","prod":"환자감시장치, 제세동기, 체성분 분석기 등","loc":"강원도","year":"2021","off":"033-742-5400","fax":"033-742-5483","mgr":"주형우 사원","ph":"010-6266-6522","em":"howard@mediana.co.kr","hp":"www.mediana.co.kr","adr":"강원도 원주시 문막읍 동화공단로 132","cn":"영국, 이탈리아, 중국, 태국, 인도, 러시아, 우크라이나, 미국, 멕시코, 페루, 남아공 등","inn":"-","ven":"-","wom":"-","dis":"-","soc":"-","e21":"","e22":"","e23":"","e24":"","e25":"","e26":"","gpass":"","mem":"","un":"","assoc":"","tech":"CE, ISO13485, FDA","vend":"","consult":""},{"n":"㈜비스토스","ceo":"이후정","cat":"","prod":"환자감시장치, 태아감시장치","loc":"성남시","year":"2021","off":"031-750-0340","fax":"031-750-0344","mgr":"김나현 사원","ph":"010-8341-6008","em":"bright@bistos.co.kr","hp":"www.bistos.co.kr","adr":"경기도 용인시 처인구 포곡읍 금어로 522","cn":"미국, 인도네시아, 폴란드, 페루, 이집트 등","inn":"-","ven":"-","wom":"-","dis":"-","soc":"-","e21":"","e22":"","e23":"","e24":"","e25":"","e26":"","gpass":"","mem":"","un":"","assoc":"","tech":"ISO 13485, CE, FDA, SFDA, Secretaria de Salud, RoHS, 국제특허","vend":"","consult":""},{"n":"㈜에이팩","ceo":"송규섭","cat":"","prod":"LED 조명","loc":"대전시","year":"2021","off":"042-864-0815","fax":"042-862-9815","mgr":"현영수 이사","ph":"010-8972-2907","em":"ys.hyun@apack.net","hp":"www.apack.net","adr":"대전시 유성구 대덕대로 838","cn":"미국，독일，일본，베트남，인도네시아","inn":"-","ven":"-","wom":"-","dis":"-","soc":"-","e21":"","e22":"","e23":"","e24":"","e25":"","e26":"","gpass":"","mem":"","un":"","assoc":"","tech":"UL, ETL, CE","vend":"","consult":""},{"n":"우선이엔씨㈜","ceo":"김광수","cat":"","prod":"전기공사업, 통신공사업","loc":"서울특별시","year":"2021","off":"02-419-8104","fax":"02-419-8106","mgr":"엄주명 전무","ph":"010-9656-0006","em":"jm.eom@woosunenc.com","hp":"www.woosun.co.kr","adr":"서울특별시 송파구 백제고분로 75","cn":"인도, 네팔, 베트남, 미얀마, 부탄, 방글라데시","inn":"-","ven":"-","wom":"-","dis":"-","soc":"-","e21":"","e22":"","e23":"","e24":"","e25":"","e26":"","gpass":"","mem":"","un":"","assoc":"","tech":"-","vend":"","consult":""},{"n":"이앤에이치㈜","ceo":"박대전","cat":"","prod":"태양광 발전장치, 전기에너지 저장장치","loc":"서울특별시","year":"2021","off":"02-323-3385","fax":"02-323-7785","mgr":"김선중 부장","ph":"010-2032-0785","em":"nmlmman78@gmail.com","hp":"www.eandh.co.kr","adr":"서울특별시 성동구 성수이로 7길 27","cn":"일본, 인도네시아, 남아공 외","inn":"-","ven":"-","wom":"-","dis":"-","soc":"-","e21":"","e22":"","e23":"","e24":"","e25":"","e26":"","gpass":"","mem":"","un":"","assoc":"","tech":"-","vend":"","consult":""},{"n":"희성폴리머㈜","ceo":"권영락","cat":"","prod":"산업용 원단, 연포장, 조립식 구조물","loc":"서울특별시","year":"2021","off":"02-6960-0900","fax":"02-6960-0999","mgr":"이원준 사원","ph":"010-8889-1064","em":"216wj@hspd.co.kr","hp":"www.hspd.co.kr","adr":"서울특별시 종로구 청계천로 41","cn":"미국，사우디，러시아 등","inn":"-","ven":"-","wom":"-","dis":"-","soc":"-","e21":"","e22":"","e23":"","e24":"","e25":"","e26":"","gpass":"","mem":"","un":"","assoc":"","tech":"상표권(ECM, UNIFLEX, ECM)","vend":"","consult":""},{"n":"㈜대원지에스아이","ceo":"서보성","cat":"","prod":"색채선별기, 곡물/식품 및 재활용 가공기계","loc":"경상도","year":"2021","off":"054-973-2221","fax":"054-973-2230","mgr":"장우석 차장","ph":"010-6389-2295","em":"traderu@daewon.com","hp":"www.daewon.com","adr":"경상북도 칠곡군 왜관음 아곡 6길 42","cn":"인도, 러시아, 태국 등","inn":"-","ven":"-","wom":"-","dis":"-","soc":"-","e21":"","e22":"","e23":"","e24":"","e25":"","e26":"","gpass":"","mem":"","un":"","assoc":"","tech":"CE, ISO9001, EAC","vend":"","consult":""},{"n":"동우옵트론㈜","ceo":"김영준","cat":"","prod":"연소가스분석기기, 광학기기","loc":"경기도","year":"2021","off":"031-765-0300","fax":"031-765-0222","mgr":"김석 차장","ph":"010-7141-2284","em":"os@optron.co.kr","hp":"www.optron.co.kr","adr":"경기도 광주시 오포음 회안대로 102-8","cn":"인도，터키, 파키스탄，중국, 핀란드","inn":"-","ven":"-","wom":"-","dis":"-","soc":"-","e21":"","e22":"","e23":"","e24":"","e25":"","e26":"","gpass":"","mem":"","un":"","assoc":"","tech":"CE, CB, ISO 9001, ISO 14001, TUV, CCEP, CPA","vend":"","consult":""},{"n":"아쿠아인터내셔날","ceo":"윤덕현","cat":"","prod":"프로젝트사업, 컨설팅서비스","loc":"부산시","year":"2021","off":"-","fax":"-","mgr":"-","ph":"-","em":"-","hp":"-","adr":"부산시 해운대구 센텀중앙로 48","cn":"-","inn":"-","ven":"-","wom":"-","dis":"-","soc":"-","e21":"-","e22":"-","e23":"-","e24":"-","e25":"","e26":"","gpass":"","mem":"","un":"","assoc":"","tech":"-","vend":"","consult":""},{"n":"㈜웃샘","ceo":"이명식","cat":"","prod":"음압캐리어","loc":"충청도","year":"2021","off":"043-236-0270","fax":"043-236-0275","mgr":"유차열 부장","ph":"010-5638-0275","em":"cyu@wosem.co.kr","hp":"www.wosem.co.kr","adr":"충청북도 청주시 흥덕구 오송읍 오송생명ㄹ고5로 179","cn":"인도, 캄보디아 등","inn":"-","ven":"-","wom":"-","dis":"-","soc":"-","e21":"","e22":"","e23":"","e24":"","e25":"","e26":"","gpass":"","mem":"","un":"","assoc":"","tech":"CE, EN ISO 13485","vend":"","consult":""},{"n":"지에스아이엘","ceo":"이정우","cat":"","prod":"응용 소프트웨어 개발 및 공급업","loc":"경기도","year":"2021","off":"02-6247-7500","fax":"02-6937-0046","mgr":"이정우 대표","ph":"010-4034-5537","em":"elisha.lee@gsil.kr","hp":"www.gsil.kr","adr":"경기도 성남시 분당구 판교로289번길 20","cn":"쿠웨이트","inn":"-","ven":"-","wom":"-","dis":"-","soc":"-","e21":"","e22":"","e23":"","e24":"","e25":"","e26":"","gpass":"","mem":"","un":"","assoc":"","tech":"PCT","vend":"","consult":""},{"n":"㈜프로테옴텍","ceo":"임국진","cat":"","prod":"알러지 진단키트","loc":"서울특별시","year":"2021","off":"02-6968-5277","fax":"010-3115-5640","mgr":"남궁찬 대리","ph":"010-3115-5640","em":"cnamkung@proteometech.com","hp":"www.proteometech.com","adr":"서울특별시 강서구 양천로 401","cn":"인도, 베트남, 러시아, 아프가니스탄, 홍콩 등","inn":"-","ven":"-","wom":"-","dis":"-","soc":"-","e21":"","e22":"","e23":"","e24":"","e25":"","e26":"","gpass":"","mem":"","un":"","assoc":"","tech":"CE, P3H, MP","vend":"","consult":""},{"n":"에스디바이오센서㈜","ceo":"이효근","cat":"","prod":"코로나 바이러스 진단 키트","loc":"경기도","year":"2021, 2022","off":"031-300-0400","fax":"031-300-0499","mgr":"조성호 팀장","ph":"010-3319-2038","em":"cedric@sdbiosensor.com","hp":"www.sdbiosensor.co.kr","adr":"경기도 수원시 영통구 덕영대로 1556번길 16","cn":"유럽, 아시아, 아프리카, 중남미 등 전세계","inn":"-","ven":"-","wom":"-","dis":"-","soc":"-","e21":"","e22":"","e23":"","e24":"","e25":"","e26":"","gpass":"","mem":"","un":"","assoc":"","tech":"TGA, CE, Health Canada","vend":"","consult":""},{"n":"㈜티지","ceo":"전원영","cat":"","prod":"전자정부, 스마트시티, 인공지능, IT 솔루션","loc":"경기도","year":"2021, 2022","off":"070-7734-3532","fax":"070-4275-0037","mgr":"이소희 선임","ph":"010-6664-0034","em":"shlee@tgin.kr","hp":"www.tgin.kr","adr":"인천시 연수구 송도문화로 119","cn":"튀니지, 케냐, 보츠와나, 우즈베키스탄, 카타르, 카자흐스탄, 말레이시아, 몽골, 마다가스카르, 파라과이, 페루","inn":"-","ven":"-","wom":"-","dis":"-","soc":"-","e21":"","e22":"","e23":"","e24":"","e25":"","e26":"","gpass":"","mem":"","un":"","assoc":"","tech":"-","vend":"","consult":""},{"n":"그리드위즈","ceo":"김구환","cat":"전기전자","prod":"전기자 충전모뎀, 충전장치","loc":"경기도","year":"2022","off":"031-698-3380","fax":"031-624-3380","mgr":"이충민 매니저","ph":"010-5358-6982","em":"bobby@gridwiz.com","hp":"www.gridwiz.com","adr":"경기도 성남시 분당구 산운로208번길 25","cn":"미국, 중국, 독일 등","inn":"-","ven":"-","wom":"-","dis":"-","soc":"-","e21":"","e22":"","e23":"","e24":"","e25":"","e26":"","gpass":"","mem":"","un":"","assoc":"","tech":"OPENADR, CE, EMC, OPCC, CE-RoHS, ISO 9001, ISO 14001","vend":"","consult":""},{"n":"㈜누리온","ceo":"오진탁","cat":"전기전자","prod":"LED 조명/사인모듈, 조명제어시스템","loc":"경기도","year":"2022","off":"1877-7722","fax":"0505-312-1800","mgr":"김병국 이사","ph":"010-5324-3485","em":"boris@nuri-on.com","hp":"www.nuri-on.com","adr":"경기도 안산시 상록구 팔곡두레길 111","cn":"미국,캐나다,일본,독일,이태리,프랑스,스페인,스웨텐,호주,베트남 등","inn":"-","ven":"-","wom":"-","dis":"-","soc":"-","e21":"","e22":"","e23":"","e24":"","e25":"","e26":"","gpass":"","mem":"","un":"","assoc":"","tech":"UL, CE","vend":"","consult":""},{"n":"㈜비에이에너지","ceo":"강태영","cat":"전기전자","prod":"에너지저장장치(ESS), 배터리안전시스템","loc":"광주시","year":"2022","off":"062-571-1062","fax":"062-571-3068","mgr":"유수훈 대리","ph":"010-2567-1528","em":"yoosuhun@baenergy.net","hp":"www.baenergy.co.kr","adr":"광주광역시 북구 첨단연신로 12","cn":"미국, 호주, 중동","inn":"-","ven":"-","wom":"-","dis":"-","soc":"-","e21":"","e22":"","e23":"","e24":"","e25":"","e26":"","gpass":"","mem":"","un":"","assoc":"","tech":"USPTO","vend":"","consult":""},{"n":"㈜삼진정밀","ceo":"정태희","cat":"기계장치","prod":"산업용, 상하수도용 밸브류, 수처리 기자재","loc":"대전시","year":"2022","off":"042-672-3600","fax":"042-626-3142","mgr":"이규빈 대리","ph":"010-4440-9894","em":"kblee@sjv.co.kr","hp":"www.samjinvalve.com","adr":"대전시 대덕구 대화로 132번길 22","cn":"베트남,필리핀,말레이시아 등","inn":"-","ven":"-","wom":"-","dis":"-","soc":"-","e21":"","e22":"","e23":"","e24":"","e25":"","e26":"","gpass":"","mem":"","un":"","assoc":"","tech":"TR-CU, ISO 9001","vend":"","consult":""},{"n":"LS전선","ceo":"구본규","cat":"전기전자","prod":"피복절연선, 통신 및 광케이블","loc":"경기도","year":"2022","off":"02-2189-9114","fax":"02-2139-1135","mgr":"반재봉 대리","ph":"010-9111-7541","em":"jbban@lscns.com","hp":"www.lscns.co.kr","adr":"경기도 안양시 동안구 엘에스로 127","cn":"필리핀, 인도네시아, 네팔 등","inn":"-","ven":"-","wom":"-","dis":"-","soc":"-","e21":"","e22":"","e23":"","e24":"","e25":"","e26":"","gpass":"","mem":"","un":"","assoc":"","tech":"한국표준협회 제품인증서(5건), ISO 45001, ISO/IEC 27001","vend":"","consult":""},{"n":"㈜영일교육시스템","ceo":"박영종","cat":"사무기기","prod":"자동차 교육용 훈련장비","loc":"서울특별시","year":"2022","off":"1670-3463","fax":"031-840-5832","mgr":"현민지 과장","ph":"010-4245-7271","em":"mjhyun@yes01.co.kr","hp":"www.yes01.co.kr","adr":"서울시 광진구 광나루로56길 85","cn":"에콰도르, 모로코, 파라과이 등","inn":"-","ven":"-","wom":"-","dis":"-","soc":"-","e21":"","e22":"","e23":"","e24":"","e25":"","e26":"","gpass":"","mem":"","un":"","assoc":"","tech":"-","vend":"","consult":""},{"n":"엔에이치네트웍스㈜","ceo":"이근신","cat":"","prod":"CCTV 카메라","loc":"전라도","year":"2022","off":"062-719-1080","fax":"062-719-1085","mgr":"허중빈 부사장","ph":"010-3659-2980","em":"hjb@nhss.co.kr","hp":"www.nhss.co.kr","adr":"전라북도 군산시 산단남북로 169","cn":"멕시코, 베트남","inn":"-","ven":"-","wom":"-","dis":"-","soc":"-","e21":"","e22":"","e23":"","e24":"","e25":"","e26":"","gpass":"","mem":"","un":"","assoc":"","tech":"-","vend":"","consult":""},{"n":"㈜플랫폼베이스","ceo":"김범수","cat":"","prod":"디지털 락, 스마트키","loc":"경기도","year":"2022","off":"031-5182-8255","fax":"031-5182-8256","mgr":"김영태 과장","ph":"010-8507-1510","em":"yongtae.kim@platformbase.co.kr","hp":"www.platformbase.co.kr","adr":"경기도 수원시 권선구 산업로 156번길 142-10","cn":"영국, 그리스","inn":"-","ven":"-","wom":"-","dis":"-","soc":"-","e21":"","e22":"","e23":"","e24":"","e25":"","e26":"","gpass":"","mem":"","un":"","assoc":"","tech":"SRRC,CE,특허,디자인,상표","vend":"","consult":""},{"n":"㈜피디소프트","ceo":"조현종","cat":"","prod":"시스템 통합 및 포털 CMS 구축 서비스","loc":"서울특별시","year":"2022","off":"02-1661-9829","fax":"02-811-3666","mgr":"이주현 부장","ph":"010-6555-8761","em":"ljh@pdsoft.co.kr","hp":"www.pdsoft.co.kr","adr":"서울특별시 금천구 가산디지털1로 128","cn":"베트남，필리핀, 인도네시아","inn":"-","ven":"-","wom":"-","dis":"-","soc":"-","e21":"","e22":"","e23":"","e24":"","e25":"","e26":"","gpass":"","mem":"","un":"","assoc":"","tech":"-","vend":"","consult":""},{"n":"타임교육C&P","ceo":"이길호","cat":"","prod":"수학, 과학 학습용 교구 및 교재","loc":"서울특별시","year":"2022","off":"1666-1113","fax":"02-395-0251","mgr":"백성민 차장","ph":"010-8792-5811","em":"sungmin.baek@time.com","hp":"www.timecnp.com","adr":"서울특별시 강남구 봉은사로 442","cn":"대만","inn":"-","ven":"-","wom":"-","dis":"-","soc":"-","e21":"","e22":"","e23":"","e24":"","e25":"","e26":"","gpass":"","mem":"","un":"","assoc":"","tech":"중국 상표권, 말레이시아 상표권, 플레이팩토(싱가폴, 베트남, 인도네시아, 태국)","vend":"","consult":""},{"n":"주식회사 루닛","ceo":"서범석","cat":"","prod":"인공지능 영상판독 보조 시스템","loc":"서울특별시","year":"2022","off":"02-2138-0827","fax":"-","mgr":"황재윤 매니저","ph":"010-3900-3199","em":"jyh@lunit.io","hp":"www.lunit.io","adr":"서울특별시 강남구 테헤란로 27길","cn":"유럽, 호주, 태국, UAE 등","inn":"-","ven":"-","wom":"-","dis":"-","soc":"-","e21":"","e22":"","e23":"","e24":"","e25":"","e26":"","gpass":"","mem":"","un":"","assoc":"","tech":"CE, ISO 13485, QSD 12854","vend":"","consult":""},{"n":"㈜스텍","ceo":"이창석","cat":"","prod":"열차단 필름, 차량도장보호 필름, 방역물품","loc":"서울특별시","year":"2022","off":"02-6235-7835","fax":"010-9122-0971","mgr":"최진우 프로","ph":"070-7610-7581","em":"james@stek.kr","hp":"www.stekautomotive.com","adr":"서울시 구로구 디지털로 243","cn":"미국, 캐나다, 호주, 일본, 중국, 사우디 아라비아, 브라질 등","inn":"-","ven":"-","wom":"-","dis":"-","soc":"-","e21":"","e22":"","e23":"","e24":"","e25":"","e26":"","gpass":"","mem":"","un":"","assoc":"","tech":"FDA, CE","vend":"","consult":""},{"n":"한국조명 주식회사","ceo":"이동우","cat":"","prod":"LED 조명","loc":"경기도","year":"2022","off":"1599-9754","fax":"0303-3130-7701","mgr":"이동우 대표","ph":"010-9917-7700","em":"dwlee@korealighting.kr","hp":"www.korealighting.kr","adr":"인천광역시 남동구 호구포로 139","cn":"미국 일본 베트남 유럽","inn":"-","ven":"-","wom":"-","dis":"-","soc":"-","e21":"","e22":"","e23":"","e24":"","e25":"","e26":"","gpass":"","mem":"","un":"","assoc":"","tech":"UL, CB","vend":"","consult":""}];
+var LOCAL_DATA = [{"n": "㈜로드인터내셔날", "ceo": "홍성훈", "cat": "건설환경", "prod": "철강 및 건설 장비", "loc": "서울특별시", "yr": "2021", "off": "02-563-6161", "fax": "02-563-6162", "mgr": "차민경 과장", "ph": "010-2207-7640", "em": "mincha@rico21.com", "hp": "www.rico21.com", "adr": "서울특별시강남구 밤고개로1길 10, 15층 1528호", "country": "태국, 호주, CIS", "inn": "", "ven": "", "wom": "", "dis": "", "soc": "", "r21": "", "r22": "", "r23": "", "r24": "", "r25": "", "r26": "", "gpass": "", "member": "", "exec": "", "un": "", "otherbiz": "", "tech": "", "vendor": "UNDP,ECEPP", "consult_raw": "", "id": "로드인터내셔날"}, {"n": "메디아나", "ceo": "길문종", "cat": "과기의료", "prod": "환자감시장치, 제세동기, 체성분 분석기 등", "loc": "강원도", "yr": "2021", "off": "033-742-5400", "fax": "033-742-5483", "mgr": "주형우 사원", "ph": "010-6266-6522", "em": "howard@mediana.co.kr", "hp": "www.mediana.co.kr", "adr": "강원도 원주시 문막읍 동화공단로 132", "country": "영국, 이탈리아, 중국, 태국, 인도, 러시아, 우크라이나, 미국, 멕시코, 페루, 남아공 등", "inn": "", "ven": "", "wom": "", "dis": "", "soc": "", "r21": "", "r22": "", "r23": "", "r24": "", "r25": "", "r26": "", "gpass": "O", "member": "", "exec": "", "un": "", "otherbiz": "", "tech": "해외인증(CE, ISO 13485, FDA)", "vendor": "", "consult_raw": "(21.03) 1:1 방문컨설팅 진행", "id": "메디아나"}, {"n": "㈜비스토스", "ceo": "이후정", "cat": "과기의료", "prod": "환자감시장치, 태아감시장치", "loc": "경기도", "yr": "2021", "off": "031-750-0340", "fax": "031-750-0344", "mgr": "김나현 사원", "ph": "010-8341-6008", "em": "bright@bistos.co.kr", "hp": "www.bistos.co.kr", "adr": "경기도 용인시 처인구 포곡읍 금어로 522", "country": "미국, 인도네시아, 폴란드, 페루, 이집트 등", "inn": "", "ven": "", "wom": "", "dis": "", "soc": "", "r21": "210825_GIZ_ITB_탄자니아_의료장비공급_$27,000", "r22": "", "r23": "", "r24": "", "r25": "", "r26": "", "gpass": "O", "member": "", "exec": "", "un": "", "otherbiz": "", "tech": "해외인증(CE, ISO 13485, FDA, SFDA, RoHS) / 국제특허(출원, PCT)", "vendor": "UNGM", "consult_raw": "", "id": "비스토스"}, {"n": "㈜에이팩", "ceo": "송규섭", "cat": "전기전자", "prod": "LED 조명", "loc": "대전시", "yr": "2021", "off": "042-864-0815", "fax": "042-862-9815", "mgr": "현영수 이사", "ph": "010-8972-2907", "em": "ys.hyun@apack.net", "hp": "www.apack.net", "adr": "대전광역시 유성구 대덕대로 838", "country": "미국，독일，일본，베트남，인도네시아", "inn": "", "ven": "", "wom": "", "dis": "", "soc": "", "r21": "", "r22": "", "r23": "", "r24": "", "r25": "", "r26": "", "gpass": "O", "member": "", "exec": "", "un": "", "otherbiz": "", "tech": "해외인증(UL, ETL, CE)", "vendor": "", "consult_raw": "", "id": "에이팩"}, {"n": "우선이엔씨㈜", "ceo": "김광수", "cat": "공사및용역", "prod": "전기공사업, 통신공사업", "loc": "서울특별시", "yr": "2021", "off": "02-419-8104", "fax": "02-419-8106", "mgr": "엄주명 전무", "ph": "010-9656-0006", "em": "jm.eom@woosunenc.com", "hp": "www.woosun.co.kr", "adr": "서울특별시 송파구 백제고분로 75", "country": "인도, 네팔, 베트남, 미얀마, 부탄, 방글라데시", "inn": "", "ven": "", "wom": "", "dis": "", "soc": "", "r21": "", "r22": "", "r23": "", "r24": "", "r25": "", "r26": "", "gpass": "", "member": "", "exec": "", "un": "", "otherbiz": "", "tech": "", "vendor": "UNGM", "consult_raw": "", "id": "우선이엔씨"}, {"n": "이앤에이치㈜", "ceo": "박대전", "cat": "전기전자", "prod": "태양광 발전장치, 전기에너지 저장장치", "loc": "서울특별시", "yr": "2021", "off": "02-323-3385", "fax": "02-323-7785", "mgr": "김선중 부장", "ph": "010-2032-0785", "em": "nmlmman78@gmail.com", "hp": "www.eandh.co.kr", "adr": "서울특별시 성동구 성수이로 7길 27", "country": "일본, 인도네시아, 남아공 외", "inn": "", "ven": "", "wom": "", "dis": "", "soc": "", "r21": "", "r22": "", "r23": "", "r24": "", "r25": "", "r26": "", "gpass": "", "member": "", "exec": "O", "un": "", "otherbiz": "24-25 해외조달시장 수출 전략기업 육성사업(조달청)", "tech": "", "vendor": "UNGM", "consult_raw": "", "id": "이앤에이치"}, {"n": "희성폴리머㈜", "ceo": "권영락", "cat": "화학섬유", "prod": "산업용 원단, 연포장, 조립식 구조물", "loc": "서울특별시", "yr": "2021", "off": "02-6960-0900", "fax": "02-6960-0999", "mgr": "이원준 사원", "ph": "010-8889-1064", "em": "216wj@hspd.co.kr", "hp": "www.hspd.co.kr", "adr": "서울특별시 종로구 청계천로 41", "country": "미국，사우디，러시아 등", "inn": "", "ven": "", "wom": "", "dis": "", "soc": "", "r21": "", "r22": "", "r23": "", "r24": "", "r25": "", "r26": "", "gpass": "", "member": "", "exec": "", "un": "", "otherbiz": "", "tech": "해외상표(ECM, UNIFLEX)", "vendor": "UNGM,ICAO,UNIDO,WFP", "consult_raw": "", "id": "희성폴리머"}, {"n": "㈜대원지에스아이", "ceo": "서보성", "cat": "기계장치", "prod": "색채선별기, 곡물/식품 및 재활용 가공기계", "loc": "경상도", "yr": "2021", "off": "054-973-2221", "fax": "054-973-2230", "mgr": "장우석 차장", "ph": "010-6389-2295", "em": "traderu@daewon.com", "hp": "www.daewon.com", "adr": "경상북도 칠곡군 왜관음 아곡 6길 42", "country": "인도, 러시아, 태국 등", "inn": "", "ven": "", "wom": "", "dis": "", "soc": "", "r21": "", "r22": "", "r23": "", "r24": "", "r25": "", "r26": "", "gpass": "", "member": "", "exec": "", "un": "", "otherbiz": "", "tech": "해외인증(CE, ISO 9001, EAC)", "vendor": "", "consult_raw": "", "id": "대원지에스아이"}, {"n": "동우옵트론㈜", "ceo": "김영준", "cat": "과기의료", "prod": "연소가스분석기기, 광학기기", "loc": "경기도", "yr": "2021", "off": "031-765-0300", "fax": "031-765-0222", "mgr": "김석 차장", "ph": "010-7141-2284", "em": "os@optron.co.kr", "hp": "www.optron.co.kr", "adr": "경기도 광주시 오포음 회안대로 102-8", "country": "인도，터키, 파키스탄，중국, 핀란드", "inn": "", "ven": "", "wom": "", "dis": "", "soc": "", "r21": "", "r22": "", "r23": "", "r24": "", "r25": "", "r26": "", "gpass": "", "member": "", "exec": "", "un": "", "otherbiz": "", "tech": "해외인증(CE, CB, ISO 9001, ISO 14001, TUV, CCEP, CPA)", "vendor": "UNGM", "consult_raw": "", "id": "동우옵트론"}, {"n": "아쿠아인터내셔날", "ceo": "윤덕현", "cat": "공사및용역", "prod": "프로젝트사업, 컨설팅서비스", "loc": "부산시", "yr": "2021", "off": "-", "fax": "-", "mgr": "-", "ph": "-", "em": "-", "hp": "-", "adr": "부산광역시 해운대구 센텀중앙로 48", "country": "-", "inn": "", "ven": "", "wom": "", "dis": "", "soc": "", "r21": "210715_FAO_RFP_베트남_조기경보를 통한 생물 안전 관리 및 지속가능한 새우 양식 시스템 구축 타당성조사_$31,950", "r22": "", "r23": "", "r24": "", "r25": "", "r26": "", "gpass": "", "member": "", "exec": "", "un": "", "otherbiz": "", "tech": "", "vendor": "", "consult_raw": "", "id": "아쿠아인터내셔날"}, {"n": "㈜웃샘", "ceo": "이명식", "cat": "과기의료", "prod": "음압캐리어", "loc": "충청도", "yr": "2021", "off": "043-236-0270", "fax": "043-236-0275", "mgr": "유차열 부장", "ph": "010-5638-0275", "em": "cyu@wosem.co.kr", "hp": "www.wosem.co.kr", "adr": "충청북도 청주시 흥덕구 오송읍 오송생명ㄹ고5로 179", "country": "인도, 캄보디아 등", "inn": "", "ven": "", "wom": "", "dis": "", "soc": "", "r21": "", "r22": "", "r23": "", "r24": "", "r25": "", "r26": "", "gpass": "", "member": "", "exec": "", "un": "", "otherbiz": "", "tech": "해외인증(CE, ISO 13485)", "vendor": "", "consult_raw": "", "id": "웃샘"}, {"n": "지에스아이엘", "ceo": "이정우", "cat": "정보통신", "prod": "응용 소프트웨어 개발 및 공급업", "loc": "경기도", "yr": "2021", "off": "02-6247-7500", "fax": "02-6937-0046", "mgr": "이정우 대표", "ph": "010-4034-5537", "em": "elisha.lee@gsil.kr", "hp": "www.gsil.kr", "adr": "경기도 성남시 분당구 판교로289번길 20", "country": "쿠웨이트", "inn": "", "ven": "", "wom": "", "dis": "", "soc": "", "r21": "", "r22": "", "r23": "", "r24": "", "r25": "", "r26": "", "gpass": "O", "member": "", "exec": "", "un": "", "otherbiz": "", "tech": "국제특허(출원, PCT 4건)", "vendor": "", "consult_raw": "", "id": "지에스아이엘"}, {"n": "㈜프로테옴텍", "ceo": "임국진", "cat": "과기의료", "prod": "알러지 진단키트", "loc": "서울특별시", "yr": "2021", "off": "02-6968-5277", "fax": "010-3115-5640", "mgr": "남궁찬 대리", "ph": "010-3115-5640", "em": "cnamkung@proteometech.com", "hp": "www.proteometech.com", "adr": "서울특별시 강서구 양천로 401", "country": "인도, 베트남, 러시아, 아프가니스탄, 홍콩 등", "inn": "", "ven": "", "wom": "", "dis": "", "soc": "", "r21": "", "r22": "", "r23": "", "r24": "", "r25": "", "r26": "", "gpass": "", "member": "", "exec": "", "un": "", "otherbiz": "", "tech": "해외인증(CE 6건, 러시아 허가, 인도 의료기기 허가)", "vendor": "UNGM", "consult_raw": "", "id": "프로테옴텍"}, {"n": "에스디바이오센서㈜", "ceo": "이효근", "cat": "과기의료", "prod": "코로나 바이러스 진단 키트", "loc": "경기도", "yr": "2021, 2022", "off": "031-300-0400", "fax": "031-300-0499", "mgr": "조성호 팀장", "ph": "010-3319-2038", "em": "cedric@sdbiosensor.com", "hp": "www.sdbiosensor.co.kr", "adr": "경기도 수원시 영통구 덕영대로 1556번길 16", "country": "유럽, 아시아, 아프리카, 중남미 등 전세계", "inn": "", "ven": "", "wom": "", "dis": "", "soc": "", "r21": "", "r22": "", "r23": "", "r24": "", "r25": "", "r26": "", "gpass": "", "member": "", "exec": "", "un": "", "otherbiz": "", "tech": "해외인증(TGA, CE, Health Canada)", "vendor": "UN혁신,UNGM,UNICEF", "consult_raw": "(22.08) 1:1 방문컨설팅 진행", "id": "에스디바이오센서"}, {"n": "㈜티지", "ceo": "전원영", "cat": "정보통신", "prod": "전자정부, 스마트시티, 인공지능, IT 솔루션", "loc": "인천시", "yr": "2021, 2022", "off": "070-7734-3532", "fax": "070-4275-0037", "mgr": "이소희 선임", "ph": "010-6664-0034", "em": "shlee@tgin.kr", "hp": "www.tgin.kr", "adr": "인천광역시 연수구 송도문화로 119", "country": "튀니지, 케냐, 보츠와나, 우즈베키스탄, 카타르, 카자흐스탄, 말레이시아, 몽골, 마다가스카르, 파라과이, 페루", "inn": "", "ven": "", "wom": "", "dis": "", "soc": "", "r21": "", "r22": "", "r23": "", "r24": "", "r25": "", "r26": "", "gpass": "", "member": "", "exec": "", "un": "", "otherbiz": "", "tech": "", "vendor": "WB,ADB컨설턴트,UNDB", "consult_raw": "(22.08) 1:1 방문컨설팅 진행", "id": "티지"}, {"n": "그리드위즈", "ceo": "김구환", "cat": "전기전자", "prod": "전기자 충전모뎀, 충전장치", "loc": "경기도", "yr": "2022", "off": "031-698-3380", "fax": "031-624-3380", "mgr": "이충민 매니저", "ph": "010-5358-6982", "em": "bobby@gridwiz.com", "hp": "www.gridwiz.com", "adr": "경기도 성남시 분당구 산운로208번길 25", "country": "미국, 중국, 독일 등", "inn": "", "ven": "", "wom": "", "dis": "", "soc": "", "r21": "", "r22": "", "r23": "", "r24": "", "r25": "", "r26": "", "gpass": "", "member": "", "exec": "", "un": "", "otherbiz": "", "tech": "해외인증(OPENADR, CE, EMC, OCPP 1.6, CE-RoHS, ISO 9001, ISO 14001) / 국제특허(등록, US 1건)", "vendor": "UN혁신", "consult_raw": "(22.08) 1:1 방문컨설팅 진행", "id": "그리드위즈"}, {"n": "㈜누리온", "ceo": "오진탁", "cat": "전기전자", "prod": "LED 조명/사인모듈, 조명제어시스템", "loc": "경기도", "yr": "2022", "off": "1877-7722", "fax": "0505-312-1800", "mgr": "김병국 이사", "ph": "010-5324-3485", "em": "boris@nuri-on.com", "hp": "www.nuri-on.com", "adr": "경기도 안산시 상록구 팔곡두레길 111", "country": "미국,캐나다,일본,독일,이태리,프랑스,스페인,스웨텐,호주,베트남 등", "inn": "", "ven": "", "wom": "", "dis": "", "soc": "", "r21": "", "r22": "", "r23": "", "r24": "", "r25": "", "r26": "", "gpass": "O", "member": "", "exec": "", "un": "", "otherbiz": "", "tech": "해외인증(UL, CE)", "vendor": "UNGM", "consult_raw": "(22.08) 1:1 방문컨설팅 진행", "id": "누리온"}, {"n": "㈜비에이에너지", "ceo": "강태영", "cat": "전기전자", "prod": "에너지저장장치(ESS), 배터리안전시스템", "loc": "광주시", "yr": "2022", "off": "062-571-1062", "fax": "062-571-3068", "mgr": "유수훈 대리", "ph": "010-2567-1528", "em": "yoosuhun@baenergy.net", "hp": "www.baenergy.co.kr", "adr": "광주광역시 북구 첨단연신로 12", "country": "미국, 호주, 중동", "inn": "", "ven": "", "wom": "", "dis": "", "soc": "", "r21": "", "r22": "", "r23": "", "r24": "", "r25": "", "r26": "", "gpass": "O", "member": "", "exec": "", "un": "", "otherbiz": "", "tech": "국제특허(출원, USPTO 1건)", "vendor": "UNGM", "consult_raw": "(22.07) 1:1 방문컨설팅 진행", "id": "비에이에너지"}, {"n": "㈜삼진정밀", "ceo": "정태희", "cat": "기계장치", "prod": "산업용, 상하수도용 밸브류, 수처리 기자재", "loc": "대전시", "yr": "2022", "off": "042-672-3600", "fax": "042-626-3142", "mgr": "이규빈 대리", "ph": "010-4440-9894", "em": "kblee@sjv.co.kr", "hp": "www.samjinvalve.com", "adr": "대전광역시 대덕구 대화로 132번길 22", "country": "베트남,필리핀,말레이시아 등", "inn": "", "ven": "", "wom": "", "dis": "", "soc": "", "r21": "", "r22": "", "r23": "", "r24": "", "r25": "", "r26": "", "gpass": "", "member": "", "exec": "", "un": "", "otherbiz": "", "tech": "해외인증(TR-CU, ISO 9001)", "vendor": "SAM", "consult_raw": "(22.07) 1:1 방문컨설팅 진행", "id": "삼진정밀"}, {"n": "LS전선", "ceo": "구본규", "cat": "전기전자", "prod": "피복절연선, 통신 및 광케이블", "loc": "경기도", "yr": "2022", "off": "02-2189-9114", "fax": "02-2139-1135", "mgr": "반재봉 대리", "ph": "010-9111-7541", "em": "jbban@lscns.com", "hp": "www.lscns.co.kr", "adr": "경기도 안양시 동안구 엘에스로 127", "country": "필리핀, 인도네시아, 네팔 등", "inn": "", "ven": "", "wom": "", "dis": "", "soc": "", "r21": "", "r22": "", "r23": "", "r24": "", "r25": "", "r26": "", "gpass": "", "member": "", "exec": "", "un": "", "otherbiz": "", "tech": "해외인증(ISO 45001, ISO/IEC 27001) / 국제특허(출원, 베트남 1건, 미국 2건)", "vendor": "UNGM", "consult_raw": "(22.07) 1:1 방문컨설팅 진행", "id": "LS전선"}, {"n": "㈜영일교육시스템", "ceo": "박영종", "cat": "사무기기", "prod": "자동차 교육용 훈련장비", "loc": "서울특별시", "yr": "2022", "off": "1670-3463", "fax": "031-840-5832", "mgr": "현민지 과장", "ph": "010-4245-7271", "em": "mjhyun@yes01.co.kr", "hp": "www.yes01.co.kr", "adr": "서울특별시 광진구 광나루로56길 85", "country": "에콰도르, 모로코, 파라과이 등", "inn": "", "ven": "", "wom": "", "dis": "", "soc": "", "r21": "", "r22": "", "r23": "", "r24": "", "r25": "", "r26": "", "gpass": "O", "member": "", "exec": "", "un": "", "otherbiz": "", "tech": "", "vendor": "", "consult_raw": "(22.07) 1:1 방문컨설팅 진행", "id": "영일교육시스템"}, {"n": "엔에이치네트웍스㈜", "ceo": "이근신", "cat": "정보통신", "prod": "CCTV 카메라", "loc": "전라도", "yr": "2022", "off": "062-719-1080", "fax": "062-719-1085", "mgr": "허중빈 부사장", "ph": "010-3659-2980", "em": "hjb@nhss.co.kr", "hp": "www.nhss.co.kr", "adr": "전라북도 군산시 산단남북로 169", "country": "멕시코, 베트남", "inn": "", "ven": "", "wom": "", "dis": "", "soc": "", "r21": "", "r22": "", "r23": "", "r24": "", "r25": "", "r26": "", "gpass": "O", "member": "", "exec": "", "un": "", "otherbiz": "23-24 해외조달시장 수출 전략기업 육성사업(조달청)", "tech": "", "vendor": "UNGM", "consult_raw": "(22.10) 1:1 방문컨설팅 진행", "id": "엔에이치네트웍스"}, {"n": "㈜플랫폼베이스", "ceo": "김범수", "cat": "전기전자", "prod": "디지털 락, 스마트키", "loc": "경기도", "yr": "2022", "off": "031-5182-8255", "fax": "031-5182-8256", "mgr": "김영태 과장", "ph": "010-8507-1510", "em": "yongtae.kim@platformbase.co.kr", "hp": "www.platformbase.co.kr", "adr": "경기도 수원시 권선구 산업로 156번길 142-10", "country": "영국, 그리스", "inn": "", "ven": "", "wom": "", "dis": "", "soc": "", "r21": "", "r22": "", "r23": "", "r24": "", "r25": "", "r26": "", "gpass": "O", "member": "", "exec": "", "un": "", "otherbiz": "", "tech": "해외인증(SRRC, CE) / 국제특허(등록 다수) / 국제디자인(등록 다수) / 해외상표(다수)", "vendor": "UN혁신", "consult_raw": "(22.12) 1:1 방문컨설팅 진행", "id": "플랫폼베이스"}, {"n": "㈜피디소프트", "ceo": "조현종", "cat": "정보통신", "prod": "시스템 통합 및 포털 CMS 구축 서비스", "loc": "서울특별시", "yr": "2022", "off": "02-1661-9829", "fax": "02-811-3666", "mgr": "이주현 부장", "ph": "010-6555-8761", "em": "ljh@pdsoft.co.kr", "hp": "www.pdsoft.co.kr", "adr": "서울특별시 금천구 가산디지털1로 128", "country": "베트남，필리핀, 인도네시아", "inn": "", "ven": "", "wom": "", "dis": "", "soc": "", "r21": "", "r22": "", "r23": "", "r24": "", "r25": "", "r26": "", "gpass": "", "member": "", "exec": "", "un": "", "otherbiz": "", "tech": "", "vendor": "", "consult_raw": "(22.08) 1:1 방문컨설팅 진행", "id": "피디소프트"}, {"n": "타임교육C&P", "ceo": "이길호", "cat": "사무기기", "prod": "수학, 과학 학습용 교구 및 교재", "loc": "서울특별시", "yr": "2022", "off": "1666-1113", "fax": "02-395-0251", "mgr": "백성민 차장", "ph": "010-8792-5811", "em": "sungmin.baek@time.com", "hp": "www.timecnp.com", "adr": "서울특별시 강남구 봉은사로 442", "country": "대만", "inn": "", "ven": "", "wom": "", "dis": "", "soc": "", "r21": "", "r22": "", "r23": "", "r24": "", "r25": "", "r26": "", "gpass": "O", "member": "", "exec": "", "un": "", "otherbiz": "", "tech": "해외상표(중국, 말레이시아, 싱가포르, 베트남, 인도네시아, 태국)", "vendor": "UNGM", "consult_raw": "(22.07) 1:1 방문 컨설팅 진행", "id": "타임교육C&P"}, {"n": "주식회사 루닛", "ceo": "서범석", "cat": "과기의료", "prod": "인공지능 영상판독 보조 시스템", "loc": "서울특별시", "yr": "2022", "off": "02-2138-0827", "fax": "-", "mgr": "황재윤 매니저", "ph": "010-3900-3199", "em": "jyh@lunit.io", "hp": "www.lunit.io", "adr": "서울특별시 강남구 테헤란로 27길", "country": "유럽, 호주, 태국, UAE 등", "inn": "", "ven": "", "wom": "", "dis": "", "soc": "", "r21": "", "r22": "", "r23": "", "r24": "", "r25": "", "r26": "", "gpass": "O", "member": "", "exec": "", "un": "", "otherbiz": "", "tech": "해외인증(CE, FDA 및 글로벌 의료기기 인허가 다수) / 국제특허(등록 다수)", "vendor": "UN혁신", "consult_raw": "(22.07) 1:1 방문 컨설팅 진행", "id": "_루닛"}, {"n": "㈜스텍", "ceo": "이창석", "cat": "화학섬유", "prod": "열차단 필름, 차량도장보호 필름, 방역물품", "loc": "서울특별시", "yr": "2022", "off": "02-6235-7835", "fax": "010-9122-0971", "mgr": "최진우 프로", "ph": "070-7610-7581", "em": "james@stek.kr", "hp": "www.stekautomotive.com", "adr": "서울특별시 구로구 디지털로 243", "country": "미국, 캐나다, 호주, 일본, 중국, 사우디 아라비아, 브라질 등", "inn": "", "ven": "", "wom": "", "dis": "", "soc": "", "r21": "", "r22": "22_UNOPS_미얀마_보안필름(8mil/2겹)을 이용한 파손 방지_$11,052\n22_UNOPS_미얀마_자동차용 안전 및 보안 투명 윈도우 필름(4mil/0.1mm)공급 및 설치_$3,270\n22_UNOPS_미얀마_차량용 창문 색상 필름 공급_$293", "r23": "", "r24": "", "r25": "", "r26": "", "gpass": "O", "member": "", "exec": "", "un": "", "otherbiz": "22-23 해외조달시장 수출 전략기업 육성사업(조달청)", "tech": "해외인증(FDA, CE)", "vendor": "UN혁신", "consult_raw": "(22.08) 1:1 방문 컨설팅 진행", "id": "스텍"}, {"n": "한국조명 주식회사", "ceo": "이동우", "cat": "전기전자", "prod": "LED 조명", "loc": "인천시", "yr": "2022", "off": "1599-9754", "fax": "0303-3130-7701", "mgr": "이동우 대표", "ph": "010-9917-7700", "em": "dwlee@korealighting.kr", "hp": "www.korealighting.kr", "adr": "인천광역시 남동구 호구포로 139", "country": "미국 일본 베트남 유럽", "inn": "", "ven": "", "wom": "", "dis": "", "soc": "", "r21": "", "r22": "", "r23": "", "r24": "", "r25": "", "r26": "", "gpass": "O", "member": "", "exec": "", "un": "", "otherbiz": "", "tech": "해외인증(UL, CB)", "vendor": "UN혁신", "consult_raw": "", "id": "한국조명_"}, {"n": "엔텀바이오", "ceo": "이승호", "cat": "폐업", "prod": "", "loc": "", "yr": "2022", "off": "", "fax": "", "mgr": "", "ph": "", "em": "", "hp": "", "adr": "", "country": "", "inn": "", "ven": "", "wom": "", "dis": "", "soc": "", "r21": "", "r22": "", "r23": "", "r24": "", "r25": "", "r26": "", "gpass": "", "member": "", "exec": "", "un": "", "otherbiz": "", "tech": "", "vendor": "", "consult_raw": "", "id": "엔텀바이오"}, {"n": "㈜데이터스트림즈", "ceo": "이영상", "cat": "정보통신", "prod": "", "loc": "", "yr": "2021, 2023", "off": "", "fax": "", "mgr": "", "ph": "", "em": "", "hp": "", "adr": "", "country": "", "inn": "", "ven": "", "wom": "", "dis": "", "soc": "", "r21": "", "r22": "", "r23": "", "r24": "", "r25": "", "r26": "", "gpass": "", "member": "", "exec": "", "un": "", "otherbiz": "", "tech": "", "vendor": "UNGM", "consult_raw": "(23.04) 1:1 방문 컨설팅 진행\n(23.06) KODABIZ ODA 교육 수강\n(23.06) UNITAR 제주국제연수센터 국제워크숍 안내 및 참가 지원", "id": "데이터스트림즈"}, {"n": "㈜아이지아이에스", "ceo": "이호동", "cat": "정보통신", "prod": "드론 소프트웨어", "loc": "", "yr": "2022, 2023", "off": "", "fax": "", "mgr": "", "ph": "", "em": "", "hp": "", "adr": "", "country": "", "inn": "", "ven": "", "wom": "", "dis": "", "soc": "", "r21": "", "r22": "22_WB_우즈벡_산림ICT촉진_$145,000", "r23": "", "r24": "", "r25": "", "r26": "", "gpass": "", "member": "", "exec": "", "un": "", "otherbiz": "22-23 해외조달시장 수출 전략기업 육성사업(조달청)", "tech": "", "vendor": "자메이카정부", "consult_raw": "(22.07) 1:1 방문 컨설팅 진행\n(23.05) 1:1 방문 컨설팅 진행\n(23.06) KODABIZ ODA 교육 수강\n(23.08) ADB BOS 참가 안내 후 참가", "id": "아이지아이에스"}, {"n": "대한광통신", "ceo": "도문현", "cat": "전기전자", "prod": "광섬유, 광케이블 및 설치공사", "loc": "", "yr": "2022, 2023", "off": "", "fax": "", "mgr": "", "ph": "", "em": "", "hp": "", "adr": "", "country": "", "inn": "", "ven": "", "wom": "", "dis": "", "soc": "", "r21": "", "r22": "", "r23": "230502_IDB_자메이카_국가 광대역 연결 계획 수립_$240,000", "r24": "", "r25": "", "r26": "", "gpass": "", "member": "", "exec": "", "un": "", "otherbiz": "", "tech": "", "vendor": "UNGM", "consult_raw": "(23.04) 1:1 방문 컨설팅 진행\n(23.05) ADB 연차총회 연계 GPP행사 내 해외정부기관 5개 미팅 주선\n(23.06) UNGM 등록 지원\n(23.06) KODABIZ ODA 교육 수강", "id": "대한광통신"}, {"n": "㈜라메디텍", "ceo": "최종석", "cat": "과기의료", "prod": "레이저 채혈기, UV광조사 치료기", "loc": "", "yr": "2022, 2023", "off": "", "fax": "", "mgr": "", "ph": "", "em": "", "hp": "", "adr": "", "country": "", "inn": "", "ven": "", "wom": "", "dis": "", "soc": "", "r21": "", "r22": "", "r23": "", "r24": "", "r25": "", "r26": "", "gpass": "O", "member": "", "exec": "", "un": "", "otherbiz": "", "tech": "", "vendor": "UNGM", "consult_raw": "(23.05) KOICA 해외봉사단 물품 구매 사이트'MRO' 등록 안내 및 지원\n(23.06) EOI_ITC_미얀마_의료용품 공고 안내 및 제안서 작성 지원\n(23.06) KODABIZ ODA 교육 수강", "id": "라메디텍"}, {"n": "㈜이엘티", "ceo": "양희원", "cat": "전기전자", "prod": "에너지저장장치(ESS), 전력변환장치(PCS)", "loc": "", "yr": "2022, 2023", "off": "", "fax": "", "mgr": "", "ph": "", "em": "", "hp": "", "adr": "", "country": "", "inn": "", "ven": "", "wom": "", "dis": "", "soc": "", "r21": "", "r22": "", "r23": "", "r24": "", "r25": "", "r26": "", "gpass": "O", "member": "", "exec": "", "un": "", "otherbiz": "", "tech": "", "vendor": "", "consult_raw": "(23.08) 1:1 방문 컨설팅 진행", "id": "이엘티"}, {"n": "㈜그레넥스", "ceo": "국중창", "cat": "기계장치", "prod": "디스크형 섬유상 여과기", "loc": "서울특별시", "yr": "2023", "off": "02-3453-9166", "fax": "02-3453-3913", "mgr": "이은주 대리", "ph": "010-4556-7922", "em": "ejlee@igrenex.com", "hp": "www.iGrenex.com", "adr": "서울특별시 강남구 테헤란로 103길", "country": "영국, 미국, UAE, 인도네시아, 스웨덴, 베트남, 탄자니아, 이라크 등", "inn": "", "ven": "", "wom": "", "dis": "", "soc": "", "r21": "", "r22": "", "r23": "", "r24": "", "r25": "", "r26": "", "gpass": "", "member": "", "exec": "", "un": "", "otherbiz": "", "tech": "국내인증(성능인증, 조달우수제품) / 해외상표(영국) / 국제특허(등록, 일본 1건)", "vendor": "UNGM", "consult_raw": "(23.04) 1:1 방문 컨설팅 진행\n(23.04) UNGM 레벨업 지원\n(23.06) KODABIZ ODA 교육 수강\n(23.08) ADB BOS 참가 안내 후 참가", "id": "그레넥스"}, {"n": "그린굿스 주식회사", "ceo": "이재원", "cat": "식품건강", "prod": "양계 종자/사료, 스마트 축산 솔루션", "loc": "강원도", "yr": "2023", "off": "-", "fax": "-", "mgr": "이재원 대표", "ph": "010-6801-6844", "em": "jaymail@snu.ac.kr", "hp": "www.greengoods.co.kr", "adr": "강원도 평창군 용평면 하용전길 53", "country": "에티오피아, 우즈베키스탄, 태국, 스페인, 영국", "inn": "", "ven": "", "wom": "", "dis": "", "soc": "", "r21": "", "r22": "22_FAO_라오스_루앙프라방 주 33개 마을 토종 닭 조달_$99,100\n22_FAO_라오스_오돔싸이 주 33개 마을 토종 닭 조달_$27,400\n22_FAO_라오스_토종 가금류 닭 2,980마리 조달_$26,200", "r23": "", "r24": "", "r25": "", "r26": "", "gpass": "", "member": "", "exec": "", "un": "", "otherbiz": "", "tech": "", "vendor": "", "consult_raw": "(23.05) 1:1 방문 컨설팅 진행\n(23.09) 협회 주최 키르기스스탄 사절단 간담회 연사 초청\n(23.10) NIA 라오스 농업개발 POC 공고 전달\n(23.09) 케나 Skyvast Internation Representative 대상 기업 소개 메일 작성 지원", "id": "그린굿스_"}, {"n": "대성", "ceo": "정혁", "cat": "기계장치", "prod": "농축산 양봉 농기자재", "loc": "전라도", "yr": "2023", "off": "070-4354-4504", "fax": "-", "mgr": "김이정 팀장", "ph": "010-3361-9010", "em": "yjkim@smarthive.co.kr", "hp": "www.smarthive.co.kr", "adr": "전북 전주시 덕진구 반룡로109", "country": "", "inn": "", "ven": "", "wom": "", "dis": "", "soc": "", "r21": "", "r22": "", "r23": "", "r24": "", "r25": "", "r26": "", "gpass": "", "member": "", "exec": "", "un": "", "otherbiz": "", "tech": "국제특허(출원, PCT 다수) / 국내인증(KC, NET, 녹색기술, 녹색제품) / 해외인증(PSE)", "vendor": "UNGM", "consult_raw": "(23.04) 1:1 방문 컨설팅 진행\n(23.05) ADB 연차총회 연계 GPP행사 내 해외정부기관 2개 미팅 주선\n(23.05) UNGM 등록 지원\n(23.06) KODABIZ ODA 교육 수강\n(23.07) ITB_FAO_바베이도스_양보장재 공고 안내 및 제안서 작성 지원\n(23.09) 협회 주최 키르기스스탄 사절단 간담회 연사 초청\n(23.10) RFQ_UNDP_가나_양봉자재 공고 안내 및 제안서 작성 지원\n(24.01) 24년국가인적자원개발컨소시엄 협약기업 신청", "id": "대성"}, {"n": "한국에스엠씨㈜", "ceo": "sasahira naoyoshi", "cat": "기계장치", "prod": "자동화기기 및 부품, 자동차 교육 기자재", "loc": "서울특별시", "yr": "2023", "off": "1588-9677", "fax": "-", "mgr": "쿠니이 카오리 선임", "ph": "010-5397-9213", "em": "kunii@smckorea.co.kr", "hp": "www.smckorea.co.kr", "adr": "서울특별시 영등포구 국회대로 62길 14", "country": "중국,일본,미국,베트남 등", "inn": "", "ven": "", "wom": "", "dis": "", "soc": "", "r21": "", "r22": "", "r23": "", "r24": "", "r25": "", "r26": "", "gpass": "", "member": "", "exec": "", "un": "", "otherbiz": "", "tech": "해외인증(CE, UKCA, UL, CCC, TR-CU)", "vendor": "UNGM", "consult_raw": "(23.04) 1:1 방문 컨설팅 진행\n(23.05) UNGM 등록 지원\n(23.06) KODABIZ ODA 교육 수강", "id": "한국에스엠씨"}, {"n": "㈜닷", "ceo": "김주윤", "cat": "사무기기", "prod": "점자셀, 촉각 디스플레이, 키오스크", "loc": "서울특별시", "yr": "2023", "off": "02-864-1113", "fax": "02-864-1989", "mgr": "메르젤 타캄 팀장", "ph": "010-8384-5650", "em": "mergel@dotincorp.com", "hp": "www.dotincorp.com", "adr": "서울특별시 금천구 가산디지털1로2", "country": "폴란드, 미국, 오스트리아 등", "inn": "O", "ven": "", "wom": "", "dis": "", "soc": "", "r21": "", "r22": "", "r23": "", "r24": "", "r25": "", "r26": "", "gpass": "O", "member": "", "exec": "", "un": "", "otherbiz": "", "tech": "해외인증(UL, CE, FCC) / 국내인증(KC, NET)", "vendor": "", "consult_raw": "(23.04) 1:1 방문 컨설팅 진행\n(23.05) KOICA 해외봉사단 물품 구매 사이트'MRO' 등록 안내 및 지원\n(23.06) UNGM 정보업데이트 지원\n(23.06) KODABIZ ODA 교육 수강", "id": "닷"}, {"n": "위플랫", "ceo": "차상훈", "cat": "정보통신", "prod": "지능형 누수 관리 시스템", "loc": "대전시", "yr": "2023", "off": "042-934-7905", "fax": "-", "mgr": "이슬비 대리", "ph": "010-6542-7123", "em": "iris.lee@wiplat.com", "hp": "www.wiplat.com", "adr": "대전광역시 유성구 테크노2로 160", "country": "인도네시아, 태국, 인도 등", "inn": "O", "ven": "", "wom": "", "dis": "", "soc": "", "r21": "", "r22": "", "r23": "", "r24": "", "r25": "", "r26": "", "gpass": "", "member": "", "exec": "", "un": "", "otherbiz": "", "tech": "국제특허(등록 및 출원 다수) / 디자인권 보유 / 국내인증(KC) / 해외인증(CE)", "vendor": "UNGM", "consult_raw": "(23.04) 1:1 방문 컨설팅 진행\n(23.05) UNGM 등록 지원\n(23.06) KODABIZ ODA 교육 수강", "id": "위플랫"}, {"n": "케이.엘.이.에스㈜", "ceo": "조선영", "cat": "기계장치", "prod": "보일러 노내비계 및 인양시스템", "loc": "대전시", "yr": "2023", "off": "042-820-2363", "fax": "042-671-1133", "mgr": "김소리 대리", "ph": "010-4430-1746", "em": "sorikim@kles.co.kr", "hp": "www.kles.kr", "adr": "대전광역시 유성구 문지로 271-23", "country": "-", "inn": "", "ven": "", "wom": "", "dis": "", "soc": "", "r21": "", "r22": "", "r23": "", "r24": "", "r25": "", "r26": "", "gpass": "", "member": "", "exec": "", "un": "", "otherbiz": "", "tech": "해외인증(ISO 9001, ISO 14001, ISO 45001, CE) / 국제특허(등록, 일본·인도네시아 2건)", "vendor": "UNGM", "consult_raw": "(23.04) 1:1 방문 컨설팅 진행\n(23.04) 피지 비자 관련 문의 지원\n(23.05) UNGM 등록 지원\n(23.06) KODABIZ ODA 교육 수강\n(23.08) KOICA 조달시스템 협력업체 등록 방법 안내\n(23.08) ADB BOS 참가 안내 후 참가\n(23.04) 24년 국가인적자원개발컨소시엄 협약기업 신청", "id": "케이.엘.이.에스"}, {"n": "㈜미코바이오메드", "ceo": "이성규", "cat": "과기의료", "prod": "혈당/빈혈/콜레스테롤 측정기, 체외진단기기", "loc": "경기도", "yr": "2023", "off": "1661-6555", "fax": "070-5227-6001", "mgr": "이규희 매니저", "ph": "010-5140-5536", "em": "frahalee@mico.kr", "hp": "www.micobiomed.com", "adr": "경기도 성남시 수정구 창업로 54", "country": "세네갈, 가나, 브라질, 일본, 인도네시아", "inn": "", "ven": "", "wom": "", "dis": "", "soc": "", "r21": "", "r22": "", "r23": "", "r24": "", "r25": "", "r26": "", "gpass": "", "member": "", "exec": "", "un": "", "otherbiz": "", "tech": "해외인증(GMP, ISO 13485, ANVISA) / 국제특허(등록, 미국) / 국내특허(등록, 한국)", "vendor": "UN혁신", "consult_raw": "(23.04) 1:1 방문 컨설팅 진행\n(23.06) KODABIZ ODA 교육 수강\n(23.08) UN혁신 등록 지원", "id": "미코바이오메드"}, {"n": "씨에이치씨랩", "ceo": "차형철", "cat": "과기의료", "prod": "실험실 장비 및 물품", "loc": "대전시", "yr": "2023", "off": "042-933-0036", "fax": "042-933-0039", "mgr": "김성엽 파트장", "ph": "010-9207-4916", "em": "ilecss@chclab.com", "hp": "www.chclab.com", "adr": "대전광역시 유성구 과학성장로 150", "country": "사우디 아라비아, 베트남, 호주, 아일랜드 등", "inn": "", "ven": "", "wom": "", "dis": "", "soc": "", "r21": "", "r22": "", "r23": "", "r24": "", "r25": "", "r26": "", "gpass": "O", "member": "O", "exec": "", "un": "", "otherbiz": "24-25 해외조달시장 수출 전략기업 육성사업(조달청)", "tech": "해외인증(EN, CE) / 국내인증(KS, 성능인증, G-PASS)", "vendor": "UNGM", "consult_raw": "(23.04) 1:1 방문 컨설팅 진행\n(23.04) UNGM 등록 지원\n(23.06) EOI_ITC_미얀마_의료용품 공급 공고 안내 및 제안서 작성 지원\n(23.06) KODABIZ ODA 교육 수강\n(24.01) 24년 국가인적자원개발컨소시엄 협약기업 신청", "id": "씨에이치씨랩"}, {"n": "주식회사 아이메디신", "ceo": "강승완", "cat": "과기의료", "prod": "뇌파 분석 소프트웨어", "loc": "서울특별시", "yr": "2023", "off": "02-747-7422", "fax": "02-745-7422", "mgr": "김민정 부장", "ph": "010-7797-7707", "em": "mandykim@imedisync.com", "hp": "www.imedisync.com", "adr": "서울특별시 강남구 테헤란로 411", "country": "미국", "inn": "O", "ven": "", "wom": "", "dis": "", "soc": "", "r21": "", "r22": "", "r23": "", "r24": "", "r25": "", "r26": "", "gpass": "O", "member": "", "exec": "", "un": "", "otherbiz": "", "tech": "국내인증(혁신조달제품, KC, 식약처 인증) / 해외인증(FDA, GMP, 일본 전자기기 인증) / 국제특허(출원, PCT 다수) / 해외상표(다수 국가)", "vendor": "UNGM", "consult_raw": "(23.04) 1:1 방문 컨설팅 진행\n(23.05) UNGM 등록 지원\n(23.06) KODABIZ ODA 교육 수강\n(23.07) UNITAR 제주국제연수센터 국제워크숍 참가 안내 및 참가\n(23.08) ADB BOS 참가 안내 및 참가", "id": "_아이메디신"}, {"n": "주식회사 티에이비", "ceo": "오환종", "cat": "기계장치", "prod": "마개형 식수 자외선 살균기", "loc": "대전시", "yr": "2023", "off": "042-300-6317", "fax": "042-367-3378", "mgr": "오환종 대표", "ph": "010-8918-6317", "em": "hwanjong1@ladis.co.kr", "hp": "www.ladis.co.kr", "adr": "대전광역시 서구 대덕대로 239", "country": "필리핀, 베트남", "inn": "", "ven": "", "wom": "", "dis": "O", "soc": "", "r21": "", "r22": "", "r23": "", "r24": "", "r25": "", "r26": "", "gpass": "O", "member": "", "exec": "", "un": "", "otherbiz": "", "tech": "해외인증(FCC, CE, RoHS) / 국내인증(KC, KCL) / 국내특허(등록) / 디자인권 보유 / 해외상표(미국)", "vendor": "UN혁신", "consult_raw": "(23.04) 1:1 방문 컨설팅 진행\n(23.05) KOICA 해외봉사단 물품 구매 사이트'MRO' 등록 안내 및 지원\n(23.06) KODABIZ ODA 교육 수강\n(23.08) UN혁신 등록 지원\n(23.08) ADB BOS 참가 안내 및 참가", "id": "_티에이비"}, {"n": "주식회사 파로스마린", "ceo": "이슬기", "cat": "기계장치", "prod": "림 구동 전기추진시스템", "loc": "울산시", "yr": "2023", "off": "-", "fax": "0504-312-3708", "mgr": "이슬기 대표", "ph": "010-4346-3708", "em": "seulkielee@pharosmarine.kr", "hp": "www.pharosmarine.kr", "adr": "울산광역시 중구 종가로 362-11", "country": "-", "inn": "O", "ven": "", "wom": "", "dis": "", "soc": "", "r21": "", "r22": "", "r23": "", "r24": "", "r25": "", "r26": "", "gpass": "", "member": "", "exec": "", "un": "", "otherbiz": "", "tech": "국내특허(등록 및 출원) / 해외인증(ISO 9001, ISO 14001) / 국내인증(벤처기업 인증)", "vendor": "UNGM", "consult_raw": "(23.09) UNGM 등록 지원", "id": "_파로스마린"}, {"n": "주식회사 스타스테크", "ceo": "양승찬", "cat": "화학섬유", "prod": "친환경 제설제, 액상비료", "loc": "서울특별시", "yr": "2023", "off": "02-6952-8260", "fax": "070-4334-8255", "mgr": "신주환 부장", "ph": "010-3671-7723", "em": "isbobs@starstech.co.kr", "hp": "www.starstech.co.kr", "adr": "서울특별시 구로구 디지털로30길 28", "country": "미주, 캐나다, 태국, 필리핀", "inn": "O", "ven": "", "wom": "", "dis": "", "soc": "", "r21": "", "r22": "", "r23": "", "r24": "", "r25": "", "r26": "", "gpass": "", "member": "", "exec": "", "un": "", "otherbiz": "", "tech": "국내인증(조달우수제품, NEP, 성능인증)", "vendor": "UN혁신", "consult_raw": "(23.09) UNGM 등록 지원", "id": "_스타스테크"}, {"n": "(주)이유씨엔씨", "ceo": "최장식", "cat": "화학섬유", "prod": "에너지 절감 및 탄소저감 가능한 단차열 도료", "loc": "인천시", "yr": "2023, 2024", "off": "032-566-0650", "fax": "032-568-0651", "mgr": "최장식 대표", "ph": "010-5811-3718", "em": "eucnc0604@gmail.com", "hp": "www.eucnc.co.kr", "adr": "인천광역시 서구 정서진로410", "country": "미얀마, 인도네시아", "inn": "O", "ven": "", "wom": "", "dis": "", "soc": "", "r21": "", "r22": "", "r23": "", "r24": "", "r25": "", "r26": "", "gpass": "O", "member": "", "exec": "", "un": "", "otherbiz": "25-26 해외조달시장 수출 전략기업 육성사업(조달청)\n24 호주 시드니 건축 시드니빌드 수출컨소시엄(중기중)", "tech": "해외인증(CRRC) / 국제특허(출원, PCT 다수) / 국내인증(환경표지, 녹색기술, 혁신제품 인증)", "vendor": "UNGM,UN혁신", "consult_raw": "(23.04) 1:1 방문 컨설팅 진행\n(23.05) UNGM 벤더등록 완료\n(23.05) KOICA 해외봉사단 물품 구매 사이트'MRO' 등록 안내 및 지원\n(23.06) KODABIZ ODA 교육 수강\n(23.07) EOI_MONUSCO_콩고_페인트 공고 안내 및 제안서 작성 지원 및 PRE-BID MEEITNG 참가 지원\n(23.09) 협회 주최 키르기스스탄 사절단 간담회 연사 초청\n(24.04) UN혁신 등록 지원\n(24.06) 1:1 방문 컨설팅 진행\n(24.07) REOI_IOM_르완다_건설 기자재 및 서비스 공고 안내 및 제안서 작성 지원\n(24.09) KOTRA 붐업코리아 바이어 상담회 참석 안내 및 미팅 진행\n(24.11) 중점지원기업 간담회 참석", "id": "주이유씨엔씨"}, {"n": "㈜지오스토리", "ceo": "위광재", "cat": "정보통신", "prod": "GIS 공간정보 시스템 소프트웨어, 시스템 소프트웨어 개발 및 공급, \n광학기기/계측기기 판매, 공간정보 DB 및 \n시스템 구축, 자연과학연구 개발, 측량", "loc": "서울특별시", "yr": "2023, 2024", "off": "1800-7453", "fax": "070-5228-4731", "mgr": "정지운 대리", "ph": "010-7433-0484", "em": "jiwoon@geostory.co.kr", "hp": "www.geostory.co.kr", "adr": "서울특별시 강서구 화곡로 68길 82", "country": "-", "inn": "", "ven": "", "wom": "", "dis": "", "soc": "", "r21": "", "r22": "", "r23": "", "r24": "", "r25": "", "r26": "", "gpass": "", "member": "", "exec": "", "un": "", "otherbiz": "", "tech": "", "vendor": "UN혁신", "consult_raw": "(23.04) 1:1 방문 컨설팅 진행\n(23.05) ADB 연차총회 연계 GPP 행사 내 해외정부기관 2개 미팅 주선\n(23.06) KODABIZ ODA 교육 수강\n(23.06) UNITAR 제주국제연수센터 국제워크숍 참가 안내 및 참가\n(23.08) UN혁신 등록 지원\n(24.05) FAO_타지키스탄_지형도 구축 사업 제안서 분석 지원", "id": "지오스토리"}, {"n": "태그하이브㈜", "ceo": "아가르왈 판카즈", "cat": "정보통신", "prod": "클래스사티(Class Saathi)", "loc": "", "yr": "2024", "off": "O = 해당년도의 공문에는 있지만, 폴더 및 정보가 누락된 경우", "fax": "", "mgr": "", "ph": "", "em": "", "hp": "", "adr": "", "country": "", "inn": "", "ven": "", "wom": "", "dis": "", "soc": "", "r21": "", "r22": "", "r23": "", "r24": "", "r25": "", "r26": "", "gpass": "", "member": "", "exec": "", "un": "", "otherbiz": "", "tech": "", "vendor": "UNGM", "consult_raw": "(24.05) 1:1 방문 컨설팅 진행\n(24.05) SDG 달성을 위한 세계 스타트업 경연대회 안내 및 참가\n(24.06) UNGM 등록 지원\n(24.11) MDB별 기업 마케팅 가능한 프로젝트 정보 요청으로 ADB Development Asia, Unido Globall Call 안내\n(24.11) UN혁신 등록 지원", "id": "태그하이브"}, {"n": "디토닉 주식회사", "ceo": "전용주", "cat": "정보통신", "prod": "데이터 소프트웨어", "loc": "경기도", "yr": "2024", "off": "031-689-4770", "fax": "-", "mgr": "이노라 매니저", "ph": "010-9046-7612", "em": "noora@dtonic.io", "hp": "www.dtonic.io", "adr": "경기도 성남시 분당구 서현로 200", "country": "베트남", "inn": "O", "ven": "", "wom": "", "dis": "", "soc": "", "r21": "", "r22": "", "r23": "", "r24": "", "r25": "", "r26": "", "gpass": "O", "member": "", "exec": "", "un": "", "otherbiz": "", "tech": "국내인증(혁신제품 지정, 소프트웨어 품질인증)", "vendor": "UNGM", "consult_raw": "(24.05) 1:1 방문 컨설팅 진행\n(24.07) KODABIZ ODA 기초/심화 교육 수강\n(24.10) UN혁신 등록 지원\n(24.11) 중점지원기업 간담회 참석", "id": "디토닉_"}, {"n": "㈜본정보", "ceo": "김명호", "cat": "사무기기", "prod": "서버, 스토리지, 네트워크, PC, UTP케이블, 광케이블", "loc": "서울특별시", "yr": "2024", "off": "02-584-7744", "fax": "02-584-9678", "mgr": "문지성 대리", "ph": "010-5342-8105", "em": "jsmoon@boninfo.co.kr", "hp": "www.boninfo.co.kr", "adr": "서울특별시 강서구 양천로 547", "country": "미국, 캐나다, 폴란드", "inn": "O", "ven": "", "wom": "", "dis": "", "soc": "", "r21": "", "r22": "", "r23": "", "r24": "", "r25": "", "r26": "", "gpass": "O", "member": "", "exec": "", "un": "", "otherbiz": "", "tech": "해외인증(ISO 9001)", "vendor": "UNGM,UNDP", "consult_raw": "(24.05) 1:1 방문 컨설팅 진행\n(24.05) UNGM 등록 지원\n(24.07) KODABIZ ODA 기초/심화 교육 수강\n(24.07) UNDP_알바니아_워크스테이션 및 노트북 공급 공고 안내 및 제안서 작성 지원\n(24.07) UNDP_말레이시아_노트북 15대 공급 공고 안내 및 제안서 작성  지원\n(24.08) UNDP_잠비아_ICT 기자재 공급 공고 안내 및 제안서 작성 지원\n(24.09) UNDP_튀르키예_컴퓨터 공급 공고 안내 및 제안서 작성 지원\n(24.09) KOTRA 붐업코리아 적합 바이어 리스트 소팅 및 미팅 동반 참석", "id": "본정보"}, {"n": "오텍오티스파킹시스템", "ceo": "강태삼", "cat": "기계장치", "prod": "기계식 주차시스템, 탑승교, EV 충전 솔루션", "loc": "서울특별시", "yr": "2024", "off": "02-2098-7950", "fax": "02-2098-7990", "mgr": "강태삼 대표", "ph": "010-2546-2093", "em": "Sanghyun.song@autech-otis.co.kr", "hp": "www.autech-otis.co.kr", "adr": "서울특별시 영등포구 선유동2로 57", "country": "이스라엘, 인도, 베트남", "inn": "", "ven": "", "wom": "", "dis": "", "soc": "", "r21": "", "r22": "", "r23": "", "r24": "", "r25": "", "r26": "", "gpass": "", "member": "", "exec": "", "un": "", "otherbiz": "", "tech": "해외인증(CE 다수) / 국내인증(품질경영, 기술평가 인증) / 국내특허(등록 다수)", "vendor": "UNGM", "consult_raw": "(24.05) 1:1 방문 컨설팅 진행\n(24.05) KOTRA 한-아프리카 비즈니스 상담회 안내 및 미팅 1건 진행\n(24.06) UNGM 등록 지원\n(24.07) UNOPS_도미니카공화국_소방차 140대 공급 건 사전제안서 작성 지원\n(24.07) 룹산 키르기스스탄 전기차 충전기 공급 사업 관련 협력사와 키르기 에너지부 부장관 미팅 진행\n(24.12) 중점지원기업 간담회 참석", "id": "오텍오티스파킹시스템"}, {"n": "㈜유아이네트웍스", "ceo": "조성훈", "cat": "정보통신", "prod": "소프트웨어 개발", "loc": "서울특별시", "yr": "2024", "off": "02-586-0461", "fax": "02-6008-6311", "mgr": "류지선 부장", "ph": "010-6215-0844", "em": "naomi_uinetworks@naver.com", "hp": "www.uinetworks.co.kr", "adr": "서울특별시 중구 세종대로 72", "country": "캄보디아, 페루, 모로코 등", "inn": "O", "ven": "", "wom": "", "dis": "", "soc": "", "r21": "", "r22": "", "r23": "231110_CABEI_엘살바도르_산살바도르 버스 교통망 현대화_$479,000", "r24": "", "r25": "", "r26": "", "gpass": "", "member": "", "exec": "", "un": "", "otherbiz": "", "tech": "국내인증(소프트웨어 품질인증)", "vendor": "IDB", "consult_raw": "(24.05) KOTRA 한-아프리카 비즈니스 상담회 안내 및 미팅 1건 진행\n(24.06) 1:1 방문 컨설팅 진행\n(24.06) IDB 벤더등록 지원\n(24.06) IDB_REOI_라틴아메리카_인프라 및 교통 공공기관 디지털 전환 공고 안내 및 제안서 작성 지원\n(24.12) 중점지원기업 간담회 참석", "id": "유아이네트웍스"}, {"n": "한백", "ceo": "윤우람", "cat": "건설환경", "prod": "송배전망, 변전소 종합 건설 시공", "loc": "광주시", "yr": "2024", "off": "062-954-1122", "fax": "-", "mgr": "김신애 차장", "ph": "010-5130-1581", "em": "sinae.kim@hanbaek.co", "hp": "www.hanbaek.co", "adr": "광주광역시 광산구 비아로23", "country": "방글라데시, 캄보디아, 니카라과, 온두라스", "inn": "", "ven": "", "wom": "", "dis": "", "soc": "", "r21": "", "r22": "", "r23": "", "r24": "240513_PGCB(국가전력망운영사)_방글라데시_송전선로 철탑 이설공사_$4,600,000", "r25": "", "r26": "", "gpass": "", "member": "", "exec": "", "un": "", "otherbiz": "", "tech": "", "vendor": "", "consult_raw": "(24.05) 1:1 방문 컨설팅 진행\n(24.05) KOTRA 한-아프리카 비즈니스 상담회 안내 및 참석\n(24.06) 한-MDB그린협력포럼 참석 안내 및 참석\n(24.05) 협회 주선 과테말라 경제부 차관 미팅 지원 및 참석\n(24.07) KODABIZ ODA 기초/심화 교육 수강\n(24.07) GGHK 안내 및 참석", "id": "한백"}, {"n": "글로리엔텍㈜", "ceo": "박순호", "cat": "건설환경", "prod": "식수 공급시스템", "loc": "서울특별시", "yr": "2024", "off": "02-6933-4400", "fax": "02-6933-4500", "mgr": "박순호 대표", "ph": "010-2716-9399", "em": "shpark@gatc.co.kr", "hp": "www.gatc.co.kr", "adr": "서울특별시 마포구 성암로 330", "country": "베트남, 콜롬비아, 인도네시아 등", "inn": "O", "ven": "", "wom": "", "dis": "", "soc": "", "r21": "", "r22": "", "r23": "", "r24": "", "r25": "", "r26": "", "gpass": "", "member": "", "exec": "", "un": "", "otherbiz": "", "tech": "디자인권 보유(국내 등록)", "vendor": "UNGM", "consult_raw": "(24.05) 1:1 방문 컨설팅 진행\n(24.06) UNGM 등록 지원\n(24.11) 중점지원기업 간담회 참석", "id": "글로리엔텍"}, {"n": "와코코퍼레이션", "ceo": "신용성", "cat": "건설환경", "prod": "가정용,상업용,공업용 정수기 및 수처리 장치", "loc": "서울특별시", "yr": "2024", "off": "02-948-0657", "fax": "-", "mgr": "신경재 팀장", "ph": "010-8703-7919", "em": "kjshin@waco-corp.com", "hp": "waco-corp.com", "adr": "서울특별시 노원구 노원로 15길", "country": "", "inn": "", "ven": "", "wom": "", "dis": "", "soc": "", "r21": "", "r22": "", "r23": "", "r24": "", "r25": "", "r26": "", "gpass": "", "member": "", "exec": "", "un": "", "otherbiz": "", "tech": "해외인증(CE, CB, RoHS, FDA) / 국내인증(KC) / 해외상표(등록)", "vendor": "UNGM", "consult_raw": "(24.05) 1:1 방문 컨설팅 진행\n(24.06) IBS 컨설팅 문의로 코웍스 담당자 안내\n(24.10) UN혁신 등록 지원\n(24.10) UNGM 정보갱신 지원", "id": "와코코퍼레이션"}, {"n": "㈜지톤그룹", "ceo": "이인재", "cat": "기계장치", "prod": "고소작업차, 카고크레인", "loc": "경기도", "yr": "2024", "off": "031-575-2082", "fax": "031-575-2083", "mgr": "이경헌 책임", "ph": "010-5070-2476", "em": "ztongrouptc@ztongroup.com", "hp": "www.atomsv.co.kr", "adr": "경기도 남양주시 별내중앙로 24", "country": "베트남，말레이시아, 대만", "inn": "", "ven": "", "wom": "", "dis": "", "soc": "", "r21": "", "r22": "", "r23": "", "r24": "", "r25": "", "r26": "", "gpass": "", "member": "", "exec": "", "un": "", "otherbiz": "", "tech": "해외인증(CE, 러시아 인증)", "vendor": "우크라이나정부,UNGM", "consult_raw": "(24.05) 1:1 방문 컨설팅 진행\n(24.05) 한-아프리카 비즈니스 상담회 안내 및 미팅 3건 진행\n(24.05) 우크라이나 벤더 등록 지원\n(24.07) UNGM 정보갱신 지원\n(24.07) REOI_IOM_르완다_건설 기자재 및 서비스 용역 공고 안내 및 제안서 작성 지원\n(24.10) MDB 프로젝트 플라자 안내 및 참가", "id": "지톤그룹"}, {"n": "㈜창조이엔지", "ceo": "임현수", "cat": "기계장치", "prod": "산업용 롤(제철, 제지) 가공", "loc": "경상도", "yr": "2024", "off": "053-856-7022", "fax": "053-856-4007", "mgr": "박창식 소장", "ph": "010-8791-4432", "em": "pcs0824@naver.com", "hp": "www.changjo-eng.co.kr", "adr": "경상북도 경산시 진량읍 공단4로 180", "country": "일본.미국,이탈리아,인도", "inn": "O", "ven": "", "wom": "", "dis": "", "soc": "", "r21": "", "r22": "", "r23": "", "r24": "", "r25": "", "r26": "", "gpass": "", "member": "", "exec": "", "un": "", "otherbiz": "", "tech": "", "vendor": "UNGM", "consult_raw": "(24.05) 1:1 방문 컨설팅 진행\n(24.06) KIAT 타당성조사 제안서 검토 지원\n(24.07) KODABIZ ODA 기초/심화 교육 수강\n(24.12) UNGM 등록 지원", "id": "창조이엔지"}, {"n": "브릿징그룹코리아", "ceo": "송동천", "cat": "공사및용역", "prod": "전시회 및 무역 박람회 서비스", "loc": "서울특별시", "yr": "2024", "off": "02-555-8897", "fax": "010-2780-6171", "mgr": "이지윤 매니저", "ph": "010-2780-6171", "em": "jiyun.lee@koreabridging.com", "hp": "www.koreabridging.com", "adr": "서울특별시 강남구 삼성로126길 12", "country": "-", "inn": "", "ven": "", "wom": "", "dis": "", "soc": "", "r21": "", "r22": "", "r23": "", "r24": "", "r25": "", "r26": "", "gpass": "", "member": "", "exec": "", "un": "", "otherbiz": "", "tech": "", "vendor": "UNGM,UNDP", "consult_raw": "(24.07) 1:1 방문 컨설팅 진행\n(24.07) UNGM 등록 지원\n(24.07) UNDP Quantum 등록 지원\n(24.07) UNDP_RFQ_한국_서울정책센터 영상 및 사진 제작 서비스 공고 안내 및 제안서 작성 지원\n(24.07) UNFPA_RFQ_한국_고령과 및 저출살 글로벌 심포지엄 행사 운영 공고 안내 및 제안서 작성 지원\n(2.411) 중점지원기업 간담회 참석", "id": "브릿징그룹코리아"}, {"n": "㈜라티다", "ceo": "설주원", "cat": "정보통신", "prod": "한국 과일 시장 데이터 분석, 수입 및 판매 대행 서비스, HR대행", "loc": "서울특별시", "yr": "2024", "off": "010-2821-0691", "fax": "-", "mgr": "설주원 대표", "ph": "010-2780-0691", "em": "juanito@latidaglobal.com", "hp": "www.latidaglobal.com", "adr": "서울특벼시 서초구 강남대로 10길 68-4", "country": "페루, 멕시코", "inn": "", "ven": "", "wom": "", "dis": "", "soc": "", "r21": "", "r22": "", "r23": "", "r24": "", "r25": "", "r26": "", "gpass": "", "member": "", "exec": "", "un": "", "otherbiz": "", "tech": "", "vendor": "UNGM", "consult_raw": "(24.10) CABEI 방문출장 참가\n(24.11) 중점지원기업 간담회 참석\n(24.11) UNGM 등록 지원", "id": "라티다"}, {"n": "㈜비상교육", "ceo": "양태회", "cat": "정보통신", "prod": "에듀테크 플랫폼 및 디지털 교육 솔루션", "loc": "경기도", "yr": "2024, 2025", "off": "1544-0554", "fax": "02-6970-6148", "mgr": "이지연 CP", "ph": "010-9403-4530", "em": "jylee4@visang.com", "hp": "www.visang.com", "adr": "경기도 과천시 과천대로2길 54", "country": "중국, 베트남, 태국, 필리핀, UAAE 카타르, 오스트리아 등)", "inn": "", "ven": "O", "wom": "", "dis": "", "soc": "", "r21": "", "r22": "", "r23": "", "r24": "", "r25": "", "r26": "", "gpass": "", "member": "", "exec": "", "un": "", "otherbiz": "", "tech": "국내특허(등록 및 출원 다수) / 해외상표(등록 다수, WIPO 및 아시아 주요국) / 해외인증(일부 보유)", "vendor": "UNGM, UN혁신", "consult_raw": "(24.05) 1:1 방문 컨설팅 진행\n(24.05) WB Position Paper 검토\n(24.06) UNGM 레벨업 지원\n(24.06) 유네스코 한-아프리카 교육협력 포럼 행사 안내 및 참석\n(24.07) UNON_EOI_다국가_학습 관리 시스템 플랫폼 공급 공고 안내 및 제안서 작성 지원\n(24.10) CABEI 출장용 USP 작성 지원\n(24.11) CABEI 방문 출장 참가\n(24.11) 중점지원기업 간담회 참석\n(25.04) 1:1 방문 컨설팅 진행\n(25.07) UN혁신 등록 지원\n(25.07) KODABIZ ODA 교육 수강\n(25.08) WB 조달설명회 안내 및 참석\n(25.08) 영남대학교-GDC컨설팅과 공동 참가로 EDCF 우즈베키스탄 직업훈련기관 시설 및 장비 현대화 사업 관련 컨설팅 서비스 용역 참여 제안 후 2차 대면 미팅까지 하였으나 최종 불참 결정\n(25.09) KODABIZ 간담회 참석 \n(25.10) KOTRA 붐업코리아 안내 및 참석", "id": "비상교육"}, {"n": "㈜에누마코리아", "ceo": "전유택", "cat": "정보통신", "prod": "기초교육 애플리케이션 및 웹서비스", "loc": "", "yr": "2024, 2025", "off": "O = 해당년도의 공문에는 있지만, 폴더 및 정보가 누락된 경우", "fax": "", "mgr": "", "ph": "", "em": "", "hp": "", "adr": "", "country": "", "inn": "", "ven": "", "wom": "", "dis": "", "soc": "", "r21": "", "r22": "", "r23": "", "r24": "", "r25": "250501_유네스코한국위원회_동티모르/탄자니아_에누마스쿨공급_$70,507\n250701_Singkawang(정부기관)_인도네시아_에누마스쿨공급_$2,070", "r26": "", "gpass": "", "member": "", "exec": "", "un": "", "otherbiz": "", "tech": "", "vendor": "UNGM, UN혁신", "consult_raw": "(24.06) 1:1 방문 컨설팅 진행\n(24.06) UNGM 레벨업 지원\n(24.07) KODABIZ ODA 기초 교육 수강\n(24.09) KOTRA 붐업코리아 상담회 안내 및 참가\n(24.11) 중점지원기업 간담회 참석\n(25.04) 1:1 방문 컨설팅 진행\n(25.06) ADB 방문 출장 참가\n(25.07) UN혁신 등록 지원\n(25.07) UNICEF_EOI_ESAP_디지털 학습 콘텐츠 개발 공고 안내 및 제안서 작성 지원\n(25.07) KOTRA 붐업코리아 참가 안내 및 미팅 1건 진행\n(25.11) CABEI TC 제안서 작성 안내 및 GDC 컨설팅 제공", "id": "에누마코리아"}, {"n": "문엔지니어링㈜", "ceo": "김성만", "cat": "공사및용역", "prod": "정보통신 및 ICT 컨설팅", "loc": "서울특별시", "yr": "2024, 2025", "off": "02-2122-0700", "fax": "02-2122-0777", "mgr": "김정주 이사", "ph": "010-5549-7506", "em": "jjkim@mooneng.co.kr", "hp": "www.mooneng.co.kr", "adr": "서울특별시 금천구 가산디지털1로 146", "country": "CIS, 아프리카, 중남미", "inn": "", "ven": "", "wom": "", "dis": "", "soc": "", "r21": "", "r22": "", "r23": "", "r24": "240319_ADB_라오스_조세 현대화 프로젝트 타당성조사_$149,988", "r25": "250829_ADB_라오스_국내 재원 동원 현대화 사업_$124,996", "r26": "", "gpass": "", "member": "", "exec": "", "un": "", "otherbiz": "", "tech": "", "vendor": "", "consult_raw": "(24.05) 1:1 방문컨설팅 진행\n(24.07) KOTRA 한-아프리카 비즈니스 상담회 참가 안내 후 가나 교통부와 미팅\n(24.12) 중점지원기업 간담회 참석\n(25.03) WB_라이베리아_국립데이터센터 공유 디지털인프라 구축 공고 공유 및 제안서 작성 지원\n(25.04) 1:1 방문 컨설팅 진행\n(25.05) 몽골 WB 사업 관련 컨설턴트 소개 요청하여 협회 김현주본부장님이 따로 유선 통화함\n(25.06) ADB 방문 출장 참가\n(25.06) ADB_라오스_조세 TA 후속사업 입찰 제출 가이드라인 안내\n(25.08) GICC 참가 안내 및 미팅 2건 진행\n(25.09) KODABIZ 간담회  참석", "id": "문엔지니어링"}, {"n": "㈜오톰", "ceo": "오준호", "cat": "과기의료", "prod": "휴대용 X-RAY, AI 진단기기", "loc": "광주시", "yr": "2024, 2025", "off": "062-431-7752", "fax": "062-434-7752", "mgr": "조우연 선임", "ph": "010-9203-7737", "em": "uy.jo@theotom.com", "hp": "www.theotom.com", "adr": "광주시 북구 우치로 880번길 29", "country": "인도, 우즈베키스탄, 미국, 사우디아라비아, 인도, 호주, 스페인", "inn": "", "ven": "", "wom": "", "dis": "", "soc": "", "r21": "", "r22": "", "r23": "", "r24": "", "r25": "", "r26": "", "gpass": "", "member": "", "exec": "", "un": "", "otherbiz": "", "tech": "국내인증(NEP, NET) / 해외인증(FDA, CE, ISO 13485)", "vendor": "UNGM", "consult_raw": "(24.05) 1:1 방문컨설팅 진행\n(24.06) UNGM 레벨업 지원\n(24.07) 인도네시아보건부_ITB_모바일엑스레이 공급 공고 안내 및 제안서 작성 지원\n(24.11) CABEI 방문출장 참가\n(24.11) 중점지원기업 간담회 참석\n(25.06) 1:1 방문 컨설팅 진행\n(25.07) EOI_UNICEF_의료기자재 공고 안내 및 제안서 작성 지원", "id": "오톰"}, {"n": "㈜현대경제연구원", "ceo": "허용석", "cat": "공사및용역", "prod": "ODA컨설팅 및 초청연수", "loc": "서울특별시", "yr": "2024, 2025", "off": "02-2072-6300", "fax": "02-2072-6229", "mgr": "최가해 선임", "ph": "010-2037-6330", "em": "gh_choii@hri.co.kr", "hp": "www.hri.co.kr", "adr": "서울특별시 종로구 율곡로 194", "country": "-", "inn": "", "ven": "", "wom": "", "dis": "", "soc": "", "r21": "", "r22": "", "r23": "", "r24": "", "r25": "251216_IDB_트리니다드토바고_탈탄소화 활동 가속화 사업(한국 기술 견학)_$190,000", "r26": "", "gpass": "", "member": "", "exec": "", "un": "", "otherbiz": "", "tech": "", "vendor": "UNGM", "consult_raw": "(24.05) 1:1 방문 컨설팅 진행\n(24.06) UNGM 등록 지원\n(24.07) REOI_IDB_트리나드토바고_한국 기술 견학 공고 안내 및 제안서 작성 지원\n(25.04) 1:1 방문 컨설팅 진행", "id": "현대경제연구원"}, {"n": "주식회사 유비온", "ceo": "임재환", "cat": "정보통신", "prod": "모바일 교육 플랫폼 및 이러닝 서비스", "loc": "서울특별시", "yr": "2025", "off": "1600-0052", "fax": "-", "mgr": "양일석 부장", "ph": "010-3365-6798", "em": "pio19@naddle.net", "hp": "www.ubion.co.kr", "adr": "서울특별시 구로구 디지털로 34길 27", "country": "우즈베키스탄, 베트남, 아제르바이잔, 르완다, 스리랑카)", "inn": "O", "ven": "", "wom": "", "dis": "", "soc": "", "r21": "", "r22": "", "r23": "", "r24": "", "r25": "", "r26": "", "gpass": "", "member": "", "exec": "", "un": "", "otherbiz": "", "tech": "", "vendor": "UNGM", "consult_raw": "(25.05) 1:1 방문 컨설팅 진행\n(25.06) UNGM 정보갱신 지원", "id": "_유비온"}, {"n": "㈜디알젬", "ceo": "박정병", "cat": "과기의료", "prod": "의료용 X-RAY 장비", "loc": "경기도", "yr": "2025", "off": "1533-2889", "fax": "-", "mgr": "김정구 상무", "ph": "010-5239-2635", "em": "jameskim@drgem.co.kr", "hp": "www.drgem.co.kr", "adr": "경기도 광명시 하안로 60", "country": "미국, 사우디아라비아, 튀르키에, 우즈베키스탄 등)", "inn": "", "ven": "", "wom": "", "dis": "", "soc": "", "r21": "", "r22": "", "r23": "", "r24": "", "r25": "2512_에티오피아보건부_에티오피아_엑스레이 납품(하도급)_$1,951,536", "r26": "", "gpass": "O", "member": "", "exec": "", "un": "O", "otherbiz": "", "tech": "국내인증(NEP, NET) / 해외인증(FDA, CE, ISO 13485)", "vendor": "UNGM,ADB CMS(개인),IOM", "consult_raw": "(25.04) 1:1 방문 컨설팅 진행\n(25.06) UNGM 등록 지원\n(25.07) REOI_UNICEF_다국가_의료기기 제안서 안내 및 제안서 작성 지원\n(25.07) IFB_우즈베키스탄보건부_우즈베키스탄_타슈켄트 종합병원 건립사업 입찰 서류 요청법 안내\n(25.07) KODABIZ ODA 교육 수강\n(25.09) ADB CMS 등록 지원\n(25.10) KOTRA 붐업코리아 안내 및 미팅 1건 진행\n(25.10) 2차 컨설팅 진행\n(25.11) IOM 후속 회의 및 UNGM 사이트 활용법 관련 3차 컨설팅 진행\n(25.11) IOM 등록 지원", "id": "디알젬"}, {"n": "㈜한국정보기술단", "ceo": "이우용", "cat": "정보통신", "prod": "정보통신 컨설팅 및 솔루션", "loc": "경기도", "yr": "2025", "off": "02-3471-7771", "fax": "02-3471-7771", "mgr": "권보라 부장", "ph": "010-9242-4592", "em": "brkwon@audit.co.kr", "hp": "www.audit.co.kr", "adr": "경기도 과천시 뒷골 2로 66-1", "country": "방글라데시, 라오스, 베트남, 인도네시아 등)", "inn": "", "ven": "", "wom": "", "dis": "", "soc": "", "r21": "", "r22": "", "r23": "", "r24": "", "r25": "250709_WB_방글라데시_세관 현대화 및 인프라 개발 사업_$1,286,990", "r26": "", "gpass": "", "member": "", "exec": "", "un": "", "otherbiz": "", "tech": "", "vendor": "", "consult_raw": "(25.04) 1:1 방문 컨설팅 진행\n(25.04) 문엔지니어링과 WB 컨소시엄 구성 논의 지원\n(25.06) ADB 방문 출장 진행\n(25.11) WB 수주 사업으로 현지 컨설턴트와의 대금 지급 이슈에 대한 대응방안 GDC에서 지원", "id": "한국정보기술단"}, {"n": "이에스이 주식회사", "ceo": "박경식", "cat": "정보통신", "prod": "스마트 통합 관제 및 운영 시스템", "loc": "경기도", "yr": "2025", "off": "031-622-3939", "fax": "031-622-3941", "mgr": "이창호 부사장", "ph": "010-5233-9036", "em": "chleeid@eseict.com", "hp": "www.eseict.com", "adr": "경기도 성남시 분당구 판교로 228번길 15", "country": "인도네시아, 중국, 베트남, 케냐", "inn": "O", "ven": "", "wom": "", "dis": "", "soc": "", "r21": "", "r22": "", "r23": "", "r24": "", "r25": "", "r26": "", "gpass": "", "member": "", "exec": "", "un": "", "otherbiz": "", "tech": "국내인증(조달우수제품, GS, NET)", "vendor": "UNGM,UNDP,ADB CMS(기업)", "consult_raw": "(25.04) 1:1 방문 컨설팅 진행\n(25.06) WSCE 안내 후 참석\n(25.07) 썬즈와 필리핀 사업 컨소시엄 구성 지원\n(25.07) KODABIZ ODA 교육 수강\n(25.07) UNGM 등록 지원\n(25.07) UNDP Quantum 등록 지원\n(25.08) ADB BOF 안내 후 참가\n(25.09) ADB CMS 컨설팅펌 등록 지원", "id": "이에스이_"}, {"n": "㈜오션정보기술", "ceo": "이종규", "cat": "정보통신", "prod": "통계 및 전산 시스템 개발", "loc": "대전시", "yr": "2025", "off": "042-719-2012", "fax": "042-367-1452", "mgr": "이동수 팀장", "ph": "010-9482-7241", "em": "oceaninsa@ocean-it.co.kr", "hp": "www.ocean-it.co.kr", "adr": "대전광역시 서구 만년로 68번길 15-23", "country": "아제르바이잔, 베트남, 콜롬비아, 튀니지, 방글라데시 등", "inn": "O", "ven": "", "wom": "", "dis": "", "soc": "", "r21": "", "r22": "", "r23": "", "r24": "", "r25": "", "r26": "", "gpass": "", "member": "", "exec": "", "un": "", "otherbiz": "", "tech": "", "vendor": "UNGM", "consult_raw": "(25.04) 1:1 방문 컨설팅 진행\n(25.06) UNGM 등록 지원", "id": "오션정보기술"}, {"n": "소프트웨어팩토리", "ceo": "박은비", "cat": "정보통신", "prod": "IT 교육 플랫폼", "loc": "경상도", "yr": "2025", "off": "-", "fax": "-", "mgr": "이화윤 이사", "ph": "010-9621-8857", "em": "coo@swfact.com", "hp": "www.microlearnable.com", "adr": "경상북도 포항시 북구 흥해읍 한동로 558", "country": "미얀마, 캄보디아, 우간다, 탄자니아, 케냐, 인도네시아", "inn": "O", "ven": "", "wom": "", "dis": "", "soc": "", "r21": "", "r22": "", "r23": "", "r24": "", "r25": "", "r26": "", "gpass": "", "member": "", "exec": "", "un": "", "otherbiz": "", "tech": "국내특허(출원, 2건)", "vendor": "UNGM", "consult_raw": "(25.05) 1:1 방문 컨설팅 진행\n(25.06) UNGM 등록 지원", "id": "소프트웨어팩토리"}, {"n": "㈜사이넥스", "ceo": "김영", "cat": "과기의료", "prod": "헬스케어제품 해외 인증 컨설팅", "loc": "서울특별시", "yr": "2025", "off": "02-6202-3351", "fax": "-", "mgr": "여민아 부장", "ph": "010-9711-1155", "em": "mayeo@synex.co.kr", "hp": "www.synex.co.kr", "adr": "서울특별시 강남구 논현로 430", "country": "-", "inn": "", "ven": "O", "wom": "", "dis": "", "soc": "", "r21": "", "r22": "", "r23": "", "r24": "", "r25": "", "r26": "", "gpass": "", "member": "", "exec": "", "un": "", "otherbiz": "", "tech": "", "vendor": "UNGM", "consult_raw": "(25.04) 1:1 방문 컨설팅 진행\n(25.05) CTS 신청 자격 문의 답변\n(25.06) UNGM 등록 지원\n(25.07) OSCE_카지키스탄_의료장비 및 기자재 조달 공고 안내 후 제안서 제출\n(25.07) UNICEF_다국가_의료 소모품 공급 공고 안내 후 제안서 제출\n(25.07) UNICEF_다국가_의료 기자재 공급 공고 안내 후 제안서 제출\n(25.07) KODABIZ ODA 교육 수강\n(25.08) WB 조달 및 투자 협력 설명회 안내 및 참가", "id": "사이넥스"}, {"n": "솔젠트㈜", "ceo": "박세열", "cat": "과기의료", "prod": "감염병 진단 키트 및 시약", "loc": "대전시", "yr": "2025", "off": "1544-5696", "fax": "-", "mgr": "박준호 차장", "ph": "010-7541-1525", "em": "junho.park@solgent.com", "hp": "www.solgent.com", "adr": "대전광역시 유성구 테크노 5로 43-10", "country": "", "inn": "O", "ven": "", "wom": "", "dis": "", "soc": "", "r21": "", "r22": "", "r23": "", "r24": "", "r25": "", "r26": "", "gpass": "", "member": "", "exec": "", "un": "", "otherbiz": "", "tech": "해외인증(CE, Health Canada, CDSCO, 태국 FDA, 말레이시아 의료기기 허가)", "vendor": "UNGM", "consult_raw": "(25.04) 1:1 방문 컨설팅 진행  \n(25.06) UNGM 레벨업 지원\n(25.07) KODABIZ ODA 교육 수강", "id": "솔젠트"}, {"n": "㈜썬즈", "ceo": "김태완", "cat": "정보통신", "prod": "정보통신, 신재생 에너지, 전력 컨설팅", "loc": "경기도", "yr": "2025", "off": "02-2681-5200", "fax": "-", "mgr": "김태완 대표", "ph": "010-3933-6335", "em": "iam@globalsuns.com", "hp": "www.globalsuns.com", "adr": "경기도 광명시 하안로 228", "country": "미얀마", "inn": "", "ven": "", "wom": "", "dis": "", "soc": "", "r21": "", "r22": "", "r23": "", "r24": "", "r25": "250102_UNHCR_미얀마_태양광 발전 시스템_$117,729\n250106_UNDP_미얀마_하이브리드 태양광 시스템_$18,095\n250530_UNDP_미얀마_태양광 가로등 공급 및 설치_$47,002\n250603_MOEP(미얀마 남동부 전력부)_미얀마_200kV 변압기 공급 및 설치_$64,504\n250714_Save the Children_미얀마_3개년 태양광 발전 시스템_미정\n251113_UNICEF_미얀마_병원 내 태양광 시스템 설치_$112,071\n251114_UNOPS_미얀마_수도원학교 내 태양광 발전 시스템 설치_$77,521\n251216_UNOPS_미얀마_접이식 태양광 패널 공급_$41,074\n251128_주미얀마인도대사관_미얀마_30kW 태양광 전력 공급 시스템_$43,298", "r26": "", "gpass": "O", "member": "", "exec": "", "un": "O", "otherbiz": "", "tech": "", "vendor": "", "consult_raw": "(25.04) 1:1 방문 컨설팅 진행\n(25.05) PCP 샘플 요청으로 KOICA, GCF PCP 양식 제공\n(25.06) ADB 방문 출장 참가\n(25.06) 2차 컨설팅 진행\n(25.07) 이에스이와 필리핀 사업 컨소시엄 구성 지원\n(25.07) KODABIZ ODA 교육 수강\n(25.09) ADB BOF 안내 후 참가\n(26.01) 협회 방문하여 컨설팅 진행", "id": "썬즈"}, {"n": "㈜심지", "ceo": "정재욱", "cat": "기계장치", "prod": "중장비 시뮬레이터 개발", "loc": "울산시", "yr": "2025", "off": "052-221-3001", "fax": "-", "mgr": "윤하정 팀장", "ph": "010-7233-3613", "em": "hjyun@simglab.com", "hp": "www.SimgXR.com", "adr": "울산광역시 울주군 청량읍 율리영해 1길 54", "country": "인도네시아", "inn": "O", "ven": "", "wom": "", "dis": "", "soc": "", "r21": "", "r22": "", "r23": "", "r24": "", "r25": "", "r26": "", "gpass": "", "member": "", "exec": "", "un": "", "otherbiz": "", "tech": "국내인증(GS 인증 1등급) / 해외상표(등록, 일본·미국)", "vendor": "UNGM", "consult_raw": "(25.04) 1:1 방문 컨설팅 진행\n(25.06) UNGM 등록 지원\n(25.10) KOTRA 붐업코리아 내 부스설치로 2차 컨설팅 진행", "id": "심지"}, {"n": "메디아이플러스", "ceo": "정지희", "cat": "과기의료", "prod": "임상시험 데이터 및 정보서비스", "loc": "경기도", "yr": "2025", "off": "-", "fax": "-", "mgr": "정지희 대표", "ph": "010-4831-0130", "em": "biz@mediaiplus.com", "hp": "www.mediaiplus.com", "adr": "경기도  성남시  수정구  대왕판교로  815", "country": "미국, 중국, 태국", "inn": "", "ven": "O", "wom": "", "dis": "", "soc": "", "r21": "", "r22": "", "r23": "", "r24": "", "r25": "", "r26": "", "gpass": "", "member": "", "exec": "", "un": "", "otherbiz": "", "tech": "", "vendor": "UNGM", "consult_raw": "(25.04) 1:1 방문 컨설팅 진행  \n(25.06) UNGM 등록 지원\n(25.07) KODABIZ ODA 교육  수강\n(25.10) 2차 컨설팅 진행", "id": "메디아이플러스"}, {"n": "코코넛사일로㈜", "ceo": "김승용", "cat": "정보통신", "prod": "응용소프트웨어 개발", "loc": "서울특별시", "yr": "2025", "off": "02-564-0309", "fax": "-", "mgr": "권성일 이사", "ph": "010-5544-8108", "em": "samuel@coconutsilo.com", "hp": "www.coconutsilo.com", "adr": "서울특별시  구로구  디지털로 31길  62", "country": "베트남, 라오스", "inn": "O", "ven": "", "wom": "", "dis": "", "soc": "", "r21": "", "r22": "", "r23": "", "r24": "", "r25": "", "r26": "", "gpass": "O", "member": "", "exec": "", "un": "", "otherbiz": "25-26 해외조달시장 수출 전략기업 육성사업(조달청)", "tech": "국제특허(출원, PCT 및 중국·베트남 다수) / 해외상표(등록, 미국·베트남)", "vendor": "", "consult_raw": "(25.04) 1:1 방문 컨설팅 진행\n(25.07) KODABIZ ODA 교육 수강", "id": "코코넛사일로"}, {"n": "㈜유원지리정보시스템", "ceo": "김기창", "cat": "정보통신", "prod": "공간 정보 솔루션 및 소프트웨어 개발", "loc": "경기도", "yr": "2025", "off": "031-337-6812", "fax": "031-337-6811", "mgr": "윤석조 이사", "ph": "010-4467-9414", "em": "sjyoon@u1gis.com", "hp": "www.u1gis.com", "adr": "경기도 안양시 동안구 학의로 282, 1720", "country": "필리핀", "inn": "O", "ven": "", "wom": "", "dis": "", "soc": "", "r21": "", "r22": "", "r23": "", "r24": "", "r25": "", "r26": "", "gpass": "", "member": "", "exec": "", "un": "", "otherbiz": "", "tech": "국제특허(등록 다수, 미국·일본·유럽·중국)", "vendor": "UNGM,ADB CMS(기업&개인)", "consult_raw": "(25.04) 1:1 방문 컨설팅 진행\n(25.06) UNGM 등록 지원\n(25.08) GICC 안내 및 상담회 동반 참석\n(26.03) 협회를 통한 ADB 사업 발굴 후 방문하여 진행상황 공유", "id": "유원지리정보시스템"}, {"n": "신동아전자 주식회사", "ceo": "신창순", "cat": "전기전자", "prod": "스마트 수도미터 및 원격자동검침 플랫폼", "loc": "경기도", "yr": "2025", "off": "031-298-8852", "fax": "031-297-0557", "mgr": "김수곤 이사", "ph": "010-7171-3974", "em": "samkim@sdonga.co.kr", "hp": "www.sdonga.co.kr", "adr": "경기도 화성시 봉담읍 주석로 1156", "country": "인도, 인도네시아, 우즈베케스탄, 말레이시아 등", "inn": "", "ven": "", "wom": "", "dis": "", "soc": "", "r21": "", "r22": "", "r23": "", "r24": "", "r25": "", "r26": "", "gpass": "O", "member": "", "exec": "", "un": "", "otherbiz": "", "tech": "국내인증(환경표지, 녹색기술, 녹색제품) / 국내특허(등록) / 해외인증(SIRIM)", "vendor": "UNGM", "consult_raw": "(25.04) 1:1 방문 컨설팅 진행\n(25.05) IBS에 관심 표명하여 협회 자문단 최효순 위원님 1:1 컨설팅 제공\n(25.06) ADB CMS 등록 지원\n(25.07) 국내 EPC 업체 리스트 공유", "id": "신동아전자_"}, {"n": "㈜다비다", "ceo": "이은승", "cat": "정보통신", "prod": "스마트 학습 플랫폼 및 교육용 로봇 기자재", "loc": "경기도", "yr": "2025", "off": "070-4151-4364", "fax": "02-568-4364", "mgr": "박준섭 부대표", "ph": "010-3044-7970", "em": "june@wearedabida.com", "hp": "www.wearedabida.com", "adr": "경기도  안양시  만안구  안양로  111", "country": "루마니아  멕시코  세르비아  스페인  에콰도르  이탈리아  태국  폴란드  브라질", "inn": "O", "ven": "", "wom": "", "dis": "", "soc": "", "r21": "", "r22": "", "r23": "", "r24": "", "r25": "", "r26": "", "gpass": "", "member": "", "exec": "", "un": "", "otherbiz": "", "tech": "해외인증(FCC, CE, CCC, SRRC, ISO 9001, ISO/IEC 27001, ISO 14001 등) / 국내인증(KC) / 해외상표(등록, 태국·미국)", "vendor": "UNGM", "consult_raw": "(25.04) 1:1 방문 컨설팅 진행\n(25.06) UNGM 등록 지원", "id": "다비다"}, {"n": "㈜유주", "ceo": "김상기", "cat": "건설환경", "prod": "해양 토목기술 솔루션", "loc": "부산시", "yr": "2025", "off": "051-724-6335", "fax": "051-714-6235", "mgr": "김진해 차장", "ph": "010-5523-3568", "em": "jinhae@yujoo.co.kr", "hp": "www.yujoo.co.kr", "adr": "부산광역시 기장군 기장읍 차성로 190번길 33", "country": "인도", "inn": "O", "ven": "", "wom": "", "dis": "", "soc": "", "r21": "", "r22": "", "r23": "", "r24": "", "r25": "", "r26": "", "gpass": "", "member": "", "exec": "", "un": "", "otherbiz": "", "tech": "국내인증(방재신기술, 신기술 지정) / 국제특허(등록, 미국·인도) / 국내특허(등록 다수)", "vendor": "UNGM", "consult_raw": "(25.04) 1:1 방문 컨설팅 진행\n(25.06) ADB 방문 출장 참가\n(25.07) UNGM 레벨업 지원", "id": "유주"}];
 
-var DB=ORIG,filtered=[],filteredList=[],acIdx=-1;
-var input=document.getElementById('searchInput'),ac=document.getElementById('acList'),clrBtn=document.getElementById('clrBtn'),acOv=document.getElementById('acOverlay'),backTop=document.getElementById('backTop'),pwI=document.getElementById('pwInput'),loginErr=document.getElementById('loginErr');
+var DB = [], FAVS = [], currentUser = null, currentViewId = null;
+var unsubDB = null, unsubFavs = null, dbPage = 0, dbPP = 20;
+var editingId = null, consultEditTarget = null;
 
-function getFavs(){try{return JSON.parse(localStorage.getItem('kodabiz_favs')||'[]');}catch(e){return[];}}
-function setFavs(f){localStorage.setItem('kodabiz_favs',JSON.stringify(f));}
-function isFav(n){return getFavs().indexOf(String(n))!==-1;}
-function toggleFav(n){n=String(n);var f=getFavs();var i=f.indexOf(n);var adding=(i===-1);if(adding)f.push(n);else f.splice(i,1);setFavs(f);var b=document.getElementById('favBtn');if(b){if(adding)b.classList.add('on');else b.classList.remove('on');}showToast(adding?'즐겨찾기에 추가되었습니다':'즐겨찾기에서 삭제되었습니다');}
+firebase.initializeApp({apiKey:"AIzaSyDbyTPaqADax-ldIyxfO3Vxioxd7cJRtH0",authDomain:"kepwm-e32e5.firebaseapp.com",projectId:"kepwm-e32e5",storageBucket:"kepwm-e32e5.firebasestorage.app",messagingSenderId:"399772077463",appId:"1:399772077463:web:ef3d1ea67607e9916188d2"});
+var auth = firebase.auth(), fdb = firebase.firestore();
 
-function esc(s){if(!s)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
-function norm(s){return s.replace(/[\s㈜()（）주식회사]/g,'').toLowerCase();}
-function showToast(msg){var t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(function(){t.classList.remove('show');},2000);}
+auth.onAuthStateChanged(function(u) {
+  if (u && u.emailVerified) {
+    currentUser = u;
+    document.getElementById('loadingScreen').classList.add('hidden');
+    document.getElementById('app').classList.add('show');
+    document.getElementById('userEmail').textContent = u.email;
+    subscribeData();
+  } else {
+    window.location.href = 'index.html';
+  }
+});
 
-function tryLogin(){if(pwI.value===PW){document.getElementById('loginScreen').classList.add('hidden');document.getElementById('app').classList.add('show');initApp();}else{loginErr.classList.add('show');pwI.value='';pwI.focus();setTimeout(function(){loginErr.classList.remove('show');},2000);}}
-pwI.addEventListener('keydown',function(e){if(e.key==='Enter')tryLogin();});
-
-function refreshStats(){document.getElementById('sCnt').textContent=DB.length;var rs={},cs={};for(var i=0;i<DB.length;i++){if(DB[i].loc)rs[DB[i].loc]=1;if(DB[i].cat&&DB[i].cat!=='')cs[DB[i].cat]=1;}document.getElementById('sReg').textContent=Object.keys(rs).length;document.getElementById('sCat').textContent=Object.keys(cs).length;}
-
-function initApp(){refreshStats();buildFilterOptions();renderFilter();renderDash();renderFavs();}
-
-function switchTab(tab){var btns=document.querySelectorAll('.tab-btn');for(var j=0;j<btns.length;j++)btns[j].classList.toggle('active',btns[j].dataset.tab===tab);var bbtns=document.querySelectorAll('.bnav-btn');for(var j=0;j<bbtns.length;j++)bbtns[j].classList.toggle('active',bbtns[j].dataset.tab===tab);var tabs=document.querySelectorAll('.tab-content');for(var j=0;j<tabs.length;j++)tabs[j].classList.toggle('active',tabs[j].id==='t_'+tab);if(tab==='fav')renderFavs();window.scrollTo({top:0,behavior:'smooth'});}
-
-document.getElementById('tabBar').addEventListener('click',function(e){var b=e.target.closest('.tab-btn');if(b)switchTab(b.dataset.tab);});
-document.getElementById('bottomNav').addEventListener('click',function(e){var b=e.target.closest('.bnav-btn');if(b)switchTab(b.dataset.tab);});
-
-window.addEventListener('scroll',function(){backTop.classList.toggle('show',window.scrollY>400);},{passive:true});
-backTop.addEventListener('click',function(){window.scrollTo({top:0,behavior:'smooth'});});
-
-input.addEventListener('input',function(){var q=this.value.trim();clrBtn.classList.toggle('show',q.length>0);if(!q.length){hideAc();return;}var nq=norm(q);filtered=[];for(var i=0;i<DB.length&&filtered.length<15;i++){if(norm(DB[i].n).indexOf(nq)!==-1||DB[i].n.indexOf(q)!==-1)filtered.push(DB[i]);}if(!filtered.length){ac.innerHTML='<div class="ac-count">검색 결과가 없습니다</div>';showAc();return;}var h='<div class="ac-count">'+filtered.length+'개 기업</div>';for(var j=0;j<filtered.length;j++){var d=filtered[j];h+='<div class="ac-item" data-idx="'+j+'"><div style="min-width:0"><div class="ac-name">'+hlT(d.n,q)+'</div><div class="ac-meta">'+esc(d.prod)+' · '+esc(d.loc)+'</div></div><span class="ac-badge">'+esc(d.year)+'</span></div>';}ac.innerHTML=h;var items=ac.querySelectorAll('.ac-item');for(var k=0;k<items.length;k++)(function(idx){items[idx].addEventListener('click',function(){selCo(idx);});})(k);showAc();acIdx=-1;});
-
-function hlT(t,q){var tl=t.toLowerCase(),ql=q.toLowerCase(),i=tl.indexOf(ql);if(i===-1)return esc(t);return esc(t.slice(0,i))+'<span style="color:var(--accent2);font-weight:700">'+esc(t.slice(i,i+q.length))+'</span>'+esc(t.slice(i+q.length));}
-function showAc(){ac.classList.add('show');acOv.classList.add('show');}
-function hideAc(){ac.classList.remove('show');acOv.classList.remove('show');}
-acOv.addEventListener('click',hideAc);
-clrBtn.addEventListener('click',function(){input.value='';clrBtn.classList.remove('show');hideAc();document.getElementById('result').classList.remove('show');document.getElementById('emptyState').style.display='';input.focus();});
-
-input.addEventListener('keydown',function(e){var it=ac.querySelectorAll('.ac-item');if(e.key==='ArrowDown'){e.preventDefault();acIdx=Math.min(acIdx+1,it.length-1);uf(it);}else if(e.key==='ArrowUp'){e.preventDefault();acIdx=Math.max(acIdx-1,0);uf(it);}else if(e.key==='Enter'&&acIdx>=0){e.preventDefault();selCo(acIdx);}else if(e.key==='Escape')hideAc();});
-function uf(it){for(var i=0;i<it.length;i++)it[i].classList.toggle('active',i===acIdx);if(it[acIdx])it[acIdx].scrollIntoView({block:'nearest'});}
-function selCo(i){var d=filtered[i];input.value=d.n;hideAc();clrBtn.classList.add('show');input.blur();showResult(d);}
-
-window.showCompanyByName=function(n){for(var i=0;i<DB.length;i++)if(DB[i].n===n){switchTab('search');input.value=DB[i].n;clrBtn.classList.add('show');showResult(DB[i]);break;}};
-window.toggleSection=function(el){el.nextElementSibling.classList.toggle('open');el.querySelector('.sarr').classList.toggle('open');};
-
-function showResult(d){
-  document.getElementById('emptyState').style.display='none';
-  var r=document.getElementById('result');
-  var badges='<span class="badge badge-year">'+esc(d.year)+'년 선정</span>';
-  if(d.cat)badges+='<span class="badge badge-cat">'+esc(d.cat)+'</span>';
-  if(d.inn&&d.inn!=='-')badges+='<span class="badge badge-inn">혁신</span>';
-  if(d.ven&&d.ven!=='-')badges+='<span class="badge badge-ven">벤처</span>';
-  if(d.wom&&d.wom!=='-')badges+='<span class="badge badge-wom">여성기업</span>';
-  if(d.dis&&d.dis!=='-')badges+='<span class="badge badge-dis">장애인기업</span>';
-  if(d.soc&&d.soc!=='-')badges+='<span class="badge badge-soc">사회적기업</span>';
-  if(d.gpass)badges+='<span class="badge badge-gpass">G-PASS</span>';
-
-  var hp=d.hp&&d.hp!=='-'?'<a href="'+(d.hp.startsWith('http')?'':'https://')+esc(d.hp)+'" target="_blank" rel="noopener">'+esc(d.hp)+'</a>':esc(d.hp||'-');
-  var emLink=d.em&&d.em!=='-'?'<a href="mailto:'+esc(d.em)+'">'+esc(d.em)+'</a>':'-';
-  var phLink=d.ph&&d.ph!=='-'?'<a href="tel:'+esc(d.ph)+'">'+esc(d.ph)+'</a>':'-';
-  var offLink=d.off&&d.off!=='-'?'<a href="tel:'+esc(d.off)+'">'+esc(d.off)+'</a>':'-';
-
-  var h='<div class="company-hero"><div class="hero-top"><div class="company-name">'+esc(d.n)+'</div>';
-  h+='<button class="fav-btn'+(isFav(d.n)?' on':'')+'" id="favBtn" onclick="toggleFav(\''+esc(d.n).replace(/'/g,"\\'")+'\')">';
-  h+='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg></button></div>';
-  h+='<div class="badge-row">'+badges+'</div>';
-  h+='<div class="quick-info">';
-  h+='<div class="pill"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><div class="pill-content"><div class="pill-label">대표자</div><div class="pill-value">'+esc(d.ceo)+'</div></div></div>';
-  h+='<div class="pill"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg><div class="pill-content"><div class="pill-label">소재지</div><div class="pill-value">'+esc(d.loc)+'</div></div></div>';
-  h+='<div class="pill"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg><div class="pill-content"><div class="pill-label">대표품목</div><div class="pill-value">'+esc(d.prod)+'</div></div></div>';
-  h+='<div class="pill"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg><div class="pill-content"><div class="pill-label">진출국가</div><div class="pill-value">'+esc(d.cn||'-')+'</div></div></div>';
-  h+='</div></div>';
-
-  // Sections
-  h+='<div class="section-grid">';
-  // Contact
-  h+='<div class="section-card"><div class="section-header" onclick="toggleSection(this)"><svg class="si" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg><span class="stxt">연락처 정보</span><svg class="sarr open" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg></div>';
-  h+='<div class="sbody open"><div class="sbody-in">';
-  h+='<div class="info-row"><span class="info-key">사무실</span><span class="info-val">'+offLink+'</span></div>';
-  h+='<div class="info-row"><span class="info-key">팩스</span><span class="info-val">'+esc(d.fax||'-')+'</span></div>';
-  h+='<div class="info-row"><span class="info-key">담당자</span><span class="info-val">'+esc(d.mgr||'-')+'</span></div>';
-  h+='<div class="info-row"><span class="info-key">휴대폰</span><span class="info-val">'+phLink+'</span></div>';
-  h+='<div class="info-row"><span class="info-key">이메일</span><span class="info-val">'+emLink+'</span></div>';
-  h+='<div class="info-row"><span class="info-key">홈페이지</span><span class="info-val">'+hp+'</span></div>';
-  h+='<div class="info-row"><span class="info-key">본사주소</span><span class="info-val">'+esc(d.adr||'-')+'</span></div>';
-  h+='</div></div></div>';
-
-  // Tech & Certification
-  h+='<div class="section-card"><div class="section-header" onclick="toggleSection(this)"><svg class="si" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg><span class="stxt">인증 및 기술성</span><svg class="sarr" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg></div>';
-  h+='<div class="sbody"><div class="sbody-in">';
-  h+='<div class="info-row"><span class="info-key">기술인증</span><span class="info-val">'+esc(d.tech||'-')+'</span></div>';
-  h+='<div class="info-row"><span class="info-key">G-PASS</span><span class="info-val">'+esc(d.gpass||'-')+'</span></div>';
-  h+='<div class="info-row"><span class="info-key">회원사</span><span class="info-val">'+esc(d.mem||'-')+'</span></div>';
-  h+='<div class="info-row"><span class="info-key">UN협의체</span><span class="info-val">'+esc(d.un||'-')+'</span></div>';
-  h+='<div class="info-row"><span class="info-key">협회타사업</span><span class="info-val">'+esc(d.assoc||'-')+'</span></div>';
-  h+='<div class="info-row"><span class="info-key">벤더</span><span class="info-val">'+esc(d.vend||'-')+'</span></div>';
-  h+='<div class="info-row"><span class="info-key">컨설팅내역</span><span class="info-val">'+esc(d.consult||'-')+'</span></div>';
-  h+='</div></div></div>';
-
-  // Support Performance
-  var hasPerf=(d.e21&&d.e21!=='-')||(d.e22&&d.e22!=='-')||(d.e23&&d.e23!=='-')||(d.e24&&d.e24!=='-')||(d.e25)||(d.e26);
-  h+='<div class="section-card"><div class="section-header" onclick="toggleSection(this)"><svg class="si" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10M12 20V4M6 20v-6"/></svg><span class="stxt">지원성과</span><svg class="sarr" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg></div>';
-  h+='<div class="sbody"><div class="sbody-in">';
-  h+='<div class="info-row"><span class="info-key">2021</span><span class="info-val">'+esc(d.e21||'-')+'</span></div>';
-  h+='<div class="info-row"><span class="info-key">2022</span><span class="info-val">'+esc(d.e22||'-')+'</span></div>';
-  h+='<div class="info-row"><span class="info-key">2023</span><span class="info-val">'+esc(d.e23||'-')+'</span></div>';
-  h+='<div class="info-row"><span class="info-key">2024</span><span class="info-val">'+esc(d.e24||'-')+'</span></div>';
-  h+='<div class="info-row"><span class="info-key">2025</span><span class="info-val">'+esc(d.e25||'-')+'</span></div>';
-  h+='<div class="info-row"><span class="info-key">2026</span><span class="info-val">'+esc(d.e26||'-')+'</span></div>';
-  h+='</div></div></div>';
-
-  h+='</div>';
-  r.innerHTML=h;
-  r.classList.add('show');
-  setTimeout(function(){r.scrollIntoView({behavior:'smooth',block:'start'});},100);
+function doLogout() {
+  if (!confirm('로그아웃 하시겠습니까?')) return;
+  if (unsubDB) unsubDB();
+  if (unsubFavs) unsubFavs();
+  auth.signOut().then(function() { window.location.href = 'index.html'; });
 }
 
-// FILTER
-function buildFilterOptions(){var rs={},ys={};for(var i=0;i<DB.length;i++){if(DB[i].loc)rs[DB[i].loc]=1;var yrs=DB[i].year.split(',');for(var j=0;j<yrs.length;j++){var y=yrs[j].trim();if(y)ys[y]=1;}}
-var rSel=document.getElementById('fRegion');rSel.innerHTML='<option value="">전체 지역</option>';Object.keys(rs).sort().forEach(function(k){rSel.innerHTML+='<option value="'+esc(k)+'">'+esc(k)+'</option>';});
-var ySel=document.getElementById('fYear');ySel.innerHTML='<option value="">전체 연도</option>';Object.keys(ys).sort().forEach(function(k){ySel.innerHTML+='<option value="'+esc(k)+'">'+esc(k)+'</option>';});}
+function docId(s) { return String(s).replace(/[^\w가-힣\-]/g, '_').substring(0, 80); }
 
-function renderFilter(){var rg=document.getElementById('fRegion').value,yr=document.getElementById('fYear').value;
-filteredList=DB.filter(function(d){return(!rg||d.loc===rg)&&(!yr||d.year.indexOf(yr)!==-1);});
-document.getElementById('fResults').textContent=filteredList.length+'개 기업 (전체 '+DB.length+'개)';
-var h='';for(var i=0;i<filteredList.length;i++){var d=filteredList[i];h+='<tr><td class="clickable" onclick="showCompanyByName(\''+esc(d.n).replace(/'/g,"\\'")+'\')">' +esc(d.n)+'</td><td>'+esc(d.ceo)+'</td><td>'+esc(d.prod)+'</td><td>'+esc(d.loc)+'</td><td>'+esc(d.year)+'</td><td>'+esc(d.off)+'</td><td>'+esc(d.mgr)+'</td></tr>';}
-document.getElementById('fBody').innerHTML=h;}
+function subscribeData() {
+  unsubDB = fdb.collection('kodabiz_companies').onSnapshot(function(snap) {
+    if (!snap.empty) {
+      DB = [];
+      snap.forEach(function(d) { DB.push(Object.assign({_fid: d.id}, d.data())); });
+      DB.sort(function(a, b) { return (a.n || '').localeCompare(b.n || ''); });
+    } else if (DB.length === 0) {
+      DB = LOCAL_DATA.map(function(d) { return Object.assign({}, d); });
+    }
+    refreshStats(); buildFilterChips(); renderDbTable();
+    if (currentViewId) { var f = findCompany(currentViewId); if (f) showResult(f); }
+  }, function() {
+    if (DB.length === 0) DB = LOCAL_DATA.map(function(d) { return Object.assign({}, d); });
+    refreshStats(); buildFilterChips(); renderDbTable();
+  });
 
-window.exportCSV=function(){var list=filteredList.length?filteredList:DB;
-var csv='\uFEFF기업명,대표자,품목군,대표품목,소재지,선정년도,사무실,팩스,담당자,휴대폰,이메일,홈페이지,본사주소,진출국가,기술인증\n';
-for(var i=0;i<list.length;i++){var d=list[i];csv+='"'+[d.n,d.ceo,d.cat,d.prod,d.loc,d.year,d.off,d.fax,d.mgr,d.ph,d.em,d.hp,d.adr,d.cn,d.tech].map(function(v){return String(v||'').replace(/"/g,'""');}).join('","')+'"\n';}
-var blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='KODABIZ_기업DB.csv';a.click();showToast('CSV 파일이 다운로드됩니다');};
+  unsubFavs = fdb.collection('kodabiz_users').doc(currentUser.uid).collection('favorites').onSnapshot(function(snap) {
+    FAVS = [];
+    snap.forEach(function(d) { FAVS.push(d.data()); });
+    renderFavs();
+    document.getElementById('favCnt').textContent = FAVS.length;
+    updateFavBtn();
+  }, function() {});
+}
 
-// DASHBOARD
-function renderDash(){var locCounts={},yrCounts={};
-for(var i=0;i<DB.length;i++){var d=DB[i];if(d.loc){locCounts[d.loc]=(locCounts[d.loc]||0)+1;}
-var yrs=d.year.split(',');for(var j=0;j<yrs.length;j++){var y=yrs[j].trim();if(y)yrCounts[y]=(yrCounts[y]||0)+1;}}
-var locArr=Object.entries(locCounts).sort(function(a,b){return b[1]-a[1];});
-var maxLoc=locArr.length?locArr[0][1]:1;
-var h='<div class="dash-card"><div class="dash-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>지역별 기업 분포</div><div class="hbar-wrap">';
-for(var k=0;k<locArr.length;k++){var pct=Math.round(locArr[k][1]/maxLoc*100);h+='<div class="hbar-row"><span class="hbar-label">'+esc(locArr[k][0])+'</span><div class="hbar-track"><div class="hbar-fill" style="width:'+pct+'%"><span class="hbar-num">'+locArr[k][1]+'</span></div></div></div>';}
-h+='</div></div>';
+function findCompany(id) {
+  return DB.find(function(d) { return d.id === id || d._fid === id || d.n === id; });
+}
+function saveCompany(r) { return fdb.collection('kodabiz_companies').doc(docId(r.id || r.n)).set(r); }
+function deleteCompany(id) { return fdb.collection('kodabiz_companies').doc(docId(id)).delete(); }
+function addFav(c) {
+  return fdb.collection('kodabiz_users').doc(currentUser.uid).collection('favorites')
+    .doc(docId(c.id || c.n)).set({id: c.id || c.n, n: c.n, cat: c.cat || '', loc: c.loc || '', yr: c.yr || ''});
+}
+function removeFav(id) { return fdb.collection('kodabiz_users').doc(currentUser.uid).collection('favorites').doc(docId(id)).delete(); }
+function isFav(id) { return FAVS.some(function(f) { return f.id === id || f.n === id; }); }
 
-// Year chart
-var yrArr=Object.entries(yrCounts).sort(function(a,b){return a[0].localeCompare(b[0]);});
-h+='<div class="dash-card"><div class="dash-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>선정년도별 기업수</div><div class="hbar-wrap">';
-var maxYr=yrArr.length?Math.max.apply(null,yrArr.map(function(a){return a[1];})):1;
-for(var k=0;k<yrArr.length;k++){var pct=Math.round(yrArr[k][1]/maxYr*100);h+='<div class="hbar-row"><span class="hbar-label">'+esc(yrArr[k][0])+'</span><div class="hbar-track"><div class="hbar-fill" style="width:'+pct+'%"><span class="hbar-num">'+yrArr[k][1]+'</span></div></div></div>';}
-h+='</div></div>';
-document.getElementById('dashGrid').innerHTML=h;}
+function esc(s) { var d = document.createElement('div'); d.textContent = String(s || ''); return d.innerHTML; }
+function showToast(m, err) {
+  var t = document.getElementById('toast');
+  t.textContent = m;
+  t.style.background = err ? 'var(--danger)' : 'var(--accent-3)';
+  t.classList.add('show');
+  setTimeout(function() { t.classList.remove('show'); }, 2500);
+}
 
-// FAVORITES
-function renderFavs(){var favs=getFavs();var list=document.getElementById('favList');var empty=document.getElementById('favEmpty');
-if(!favs.length){list.innerHTML='';empty.style.display='';return;}
-empty.style.display='none';var h='';
-for(var i=0;i<favs.length;i++){var d=null;for(var j=0;j<DB.length;j++)if(DB[j].n===favs[i]){d=DB[j];break;}
-if(!d)continue;
-h+='<div class="fav-card" onclick="showCompanyByName(\''+esc(d.n).replace(/'/g,"\\'")+'\')">';
-h+='<div class="fav-info"><div class="fav-name">'+esc(d.n)+'</div><div class="fav-meta">'+esc(d.prod)+' · '+esc(d.loc)+'</div></div>';
-h+='<button class="fav-rm" onclick="event.stopPropagation();toggleFav(\''+esc(d.n).replace(/'/g,"\\'")+'\')" title="삭제"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>';}
-list.innerHTML=h;}
+function parseConsults(raw) {
+  if (!raw || !raw.trim()) return [];
+  return raw.split('\n').map(function(l) { return l.trim(); }).filter(Boolean).map(function(l) {
+    var m = l.match(/^\((\d{2,4}\.\d{2})\)\s*(.+)$/);
+    if (m) return {date: m[1], body: m[2], type: '', staff: ''};
+    return {date: '', body: l, type: '', staff: ''};
+  });
+}
+
+function getConsults(c) {
+  if (Array.isArray(c.consults) && c.consults.length > 0) return c.consults;
+  return parseConsults(c.consult_raw || '');
+}
+
+function refreshStats() {
+  document.getElementById('totalCnt').textContent = DB.length;
+  var total = 0;
+  DB.forEach(function(c) { total += getConsults(c).length; });
+  document.getElementById('consultCnt').textContent = total;
+}
+
+function buildFilterChips() {
+  var cats = {};
+  DB.forEach(function(d) { if (d.cat) cats[d.cat] = (cats[d.cat] || 0) + 1; });
+  var s = Object.entries(cats).sort(function(a, b) { return b[1] - a[1]; }).slice(0, 9);
+  var h = '<button class="chip active" data-filter="">전체</button>';
+  s.forEach(function(x) { h += '<button class="chip" data-filter="' + esc(x[0]) + '">' + esc(x[0]) + ' (' + x[1] + ')</button>'; });
+  document.getElementById('filterChips').innerHTML = h;
+}
+
+document.getElementById('filterChips').addEventListener('click', function(e) {
+  var c = e.target.closest('.chip'); if (!c) return;
+  document.querySelectorAll('#filterChips .chip').forEach(function(x) { x.classList.remove('active'); });
+  c.classList.add('active');
+  var fl = c.dataset.filter;
+  if (fl) {
+    var m = DB.filter(function(d) { return d.cat === fl; });
+    if (m.length === 1) { showResult(m[0]); return; }
+    var h = '<div class="fav-list">';
+    m.slice(0, 50).forEach(function(d) {
+      var did = esc(d.id || d.n);
+      h += '<div class="fav-card" onclick="goToCompany(this.dataset.cid)" data-cid="' + did + '">';
+      h += '<div class="fav-card-info"><div class="fav-card-name">' + esc(d.n) + '</div>';
+      h += '<div class="fav-card-meta">' + esc(d.ceo || '') + ' · ' + esc(d.loc || '') + '</div></div>';
+      h += '<span class="fav-yr">' + esc(d.yr || '') + '</span></div>';
+    });
+    h += '</div>';
+    if (m.length > 50) h += '<div style="text-align:center;padding:12px;color:var(--text-muted);font-size:12px">외 ' + (m.length - 50) + '개</div>';
+    document.getElementById('result').innerHTML = h;
+    document.getElementById('result').classList.add('show');
+  } else {
+    document.getElementById('result').classList.remove('show'); currentViewId = null;
+  }
+});
+
+var searchInput = document.getElementById('searchInput');
+var acList = document.getElementById('acList');
+var acOverlay = document.getElementById('acOverlay');
+var clrBtn = document.getElementById('clrBtn');
+
+searchInput.addEventListener('input', function() {
+  var q = this.value.trim().toLowerCase();
+  clrBtn.classList.toggle('show', q.length > 0);
+  if (q.length < 1) { hideAc(); return; }
+  var m = DB.filter(function(d) {
+    return d.n.toLowerCase().indexOf(q) !== -1 || (d.cat && d.cat.toLowerCase().indexOf(q) !== -1);
+  }).slice(0, 30);
+  if (!m.length) { hideAc(); return; }
+  var h = '<div class="ac-count">' + m.length + '개 결과</div>';
+  m.forEach(function(d) {
+    h += '<div class="ac-item" data-id="' + esc(d.id || d.n) + '">';
+    h += '<div><div class="ac-name">' + esc(d.n) + '</div><div class="ac-meta">' + esc(d.cat || '') + ' · ' + esc(d.loc || '') + '</div></div>';
+    h += '<span class="ac-badge">' + esc(d.yr || '') + '</span></div>';
+  });
+  acList.innerHTML = h;
+  acList.classList.add('show');
+  acOverlay.classList.add('show');
+});
+
+acList.addEventListener('click', function(e) {
+  var item = e.target.closest('.ac-item'); if (!item) return;
+  var d = findCompany(item.dataset.id);
+  if (d) { showResult(d); hideAc(); searchInput.value = d.n; clrBtn.classList.add('show'); }
+});
+acOverlay.addEventListener('click', hideAc);
+function hideAc() { acList.classList.remove('show'); acOverlay.classList.remove('show'); }
+function clearSearch() { searchInput.value = ''; clrBtn.classList.remove('show'); hideAc(); document.getElementById('result').classList.remove('show'); currentViewId = null; }
+
+function goToCompany(id) {
+  var d = findCompany(id); if (!d) return;
+  showResult(d); searchInput.value = d.n; clrBtn.classList.add('show');
+  document.querySelectorAll('.tab-btn').forEach(function(b) { b.classList.remove('active'); });
+  document.querySelectorAll('.tab-content').forEach(function(c) { c.classList.remove('active'); });
+  document.querySelector('[data-tab="search"]').classList.add('active');
+  document.getElementById('tab-search').classList.add('active');
+}
+
+function showResult(d) {
+  currentViewId = d.id || d.n;
+  var cid = currentViewId;
+  var consults = getConsults(d);
+  var fa = isFav(cid);
+
+  var html = '<div class="company-hero">';
+  html += '<div class="hero-top"><div>';
+  html += '<div class="hero-name">' + esc(d.n) + '</div>';
+  html += '<div class="hero-ceo">대표: ' + esc(d.ceo || '—') + '</div>';
+  html += '<div class="hero-meta"><span>' + esc(d.cat || '') + '</span><span>' + esc(d.loc || '') + '</span><span>선정: ' + esc(d.yr || '') + '</span></div>';
+  html += '</div><div style="display:flex;flex-direction:column;gap:8px;align-items:flex-end">';
+  html += '<span class="yr-badge">' + esc(d.yr || '') + '</span>';
+  html += '<button class="fav-btn' + (fa ? ' active' : '') + '" id="favBtnResult" data-cid="' + esc(cid) + '" onclick="toggleFav(this.dataset.cid)">' + (fa ? '★ 즐겨찾기 해제' : '☆ 즐겨찾기 추가') + '</button>';
+  html += '</div></div>';
+
+  var badges = '';
+  if (d.inn) badges += '<span class="badge badge-inn">혁신제품</span>';
+  if (d.ven) badges += '<span class="badge badge-ven">벤처기업</span>';
+  if (d.wom) badges += '<span class="badge badge-wom">여성기업</span>';
+  if (d.dis) badges += '<span class="badge badge-dis">장애인기업</span>';
+  if (d.soc) badges += '<span class="badge badge-soc">사회적기업</span>';
+  if (d.gpass) badges += '<span class="badge badge-gpass">G-PASS</span>';
+  if (d.member) badges += '<span class="badge badge-member">회원사</span>';
+  if (badges) html += '<div class="badge-row">' + badges + '</div>';
+  html += '</div>';
+
+  html += '<div class="info-grid">';
+  html += '<div class="info-card"><div class="info-card-title">기업 정보</div>';
+  html += '<div class="info-row"><span class="label">대표품목</span><span class="value">' + esc(d.prod || '—') + '</span></div>';
+  html += '<div class="info-row"><span class="label">진출국가</span><span class="value">' + esc(d.country || '—') + '</span></div>';
+  html += '<div class="info-row"><span class="label">기술성/인증</span><span class="value">' + esc(d.tech || '—') + '</span></div>';
+  html += '<div class="info-row"><span class="label">벤더등록</span><span class="value">' + esc(d.vendor || '—') + '</span></div>';
+  html += '<div class="info-row"><span class="label">UN협의체</span><span class="value">' + esc(d.un || '—') + '</span></div></div>';
+  html += '<div class="info-card"><div class="info-card-title">협회 관계</div>';
+  html += '<div class="info-row"><span class="label">G-PASS</span><span class="value">' + esc(d.gpass || '—') + '</span></div>';
+  html += '<div class="info-row"><span class="label">회원사</span><span class="value">' + esc(d.member || '—') + '</span></div>';
+  html += '<div class="info-row"><span class="label">임원사</span><span class="value">' + esc(d.exec || '—') + '</span></div>';
+  html += '<div class="info-row"><span class="label">협회타사업</span><span class="value">' + esc(d.otherbiz || '—') + '</span></div>';
+  html += '<div class="info-row"><span class="label">선정년도</span><span class="value">' + esc(d.yr || '—') + '</span></div></div></div>';
+
+  var results = [['2021',d.r21],['2022',d.r22],['2023',d.r23],['2024',d.r24],['2025',d.r25],['2026',d.r26]]
+    .filter(function(x) { return x[1] && x[1].trim(); });
+  if (results.length) {
+    html += '<div class="results-section"><div class="info-card-title" style="margin-bottom:10px">수주성과</div>';
+    results.forEach(function(x) { html += '<div class="result-item"><div class="result-year">' + x[0] + '</div>' + esc(x[1]) + '</div>'; });
+    html += '</div>';
+  }
+
+  var safeId = esc(cid);
+  html += '<div class="consult-section">';
+  html += '<div class="consult-header"><div class="consult-header-left">';
+  html += '<span class="consult-title">상담이력</span>';
+  html += '<span class="consult-count" id="cc_' + safeId + '">' + consults.length + '건</span></div>';
+  html += '<button class="btn-add-consult" data-cid="' + safeId + '" onclick="openConsultModal(this.dataset.cid, null)">+ 상담 추가</button></div>';
+  html += '<div class="consult-list" id="cl_' + safeId + '">' + renderConsultList(cid, consults) + '</div></div>';
+
+  html += '<div class="contact-section"><div class="info-card-title" style="margin-bottom:8px">연락처</div><div class="contact-grid">';
+  html += '<div class="contact-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>' + esc(d.off || '—') + '</div>';
+  html += '<div class="contact-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 005 5L15 13l5 2v4a2 2 0 01-2 2A16 16 0 013 6a2 2 0 012-2z"/></svg>' + esc(d.ph || '—') + '</div>';
+  html += '<div class="contact-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 7l-8.97 5.7a1.94 1.94 0 01-2.06 0L2 7"/></svg>' + (d.em ? '<a href="mailto:' + esc(d.em) + '">' + esc(d.em) + '</a>' : '—') + '</div>';
+  html += '<div class="contact-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>' + (d.hp ? '<a href="http://' + esc(d.hp) + '" target="_blank">홈페이지</a>' : '—') + '</div>';
+  html += '<div class="contact-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4-4v2"/><circle cx="9" cy="7" r="4"/></svg>담당: ' + esc(d.mgr || '—') + '</div>';
+  if (d.adr) html += '<div class="contact-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>' + esc(d.adr) + '</div>';
+  html += '</div></div>';
+
+  document.getElementById('result').innerHTML = html;
+  document.getElementById('result').classList.add('show');
+}
+
+function renderConsultList(cid, consults) {
+  if (!consults || !consults.length) return '<div class="no-consult">상담내역이 없습니다</div>';
+  var safeId = esc(cid);
+  var h = '';
+  consults.forEach(function(c, i) {
+    h += '<div class="consult-item">';
+    h += '<div class="consult-item-header">';
+    if (c.date) h += '<span class="consult-date">' + esc(c.date) + '</span>';
+    if (c.type) h += '<span class="consult-type">' + esc(c.type) + '</span>';
+    h += '</div><div class="consult-body">' + esc(c.body) + '</div>';
+    if (c.staff) h += '<div class="consult-staff">담당: ' + esc(c.staff) + '</div>';
+    h += '<div class="consult-actions">';
+    h += '<button class="act-sm act-sm-edit" data-cid="' + safeId + '" data-idx="' + i + '" onclick="openConsultModal(this.dataset.cid, +this.dataset.idx)">수정</button>';
+    h += '<button class="act-sm act-sm-del" data-cid="' + safeId + '" data-idx="' + i + '" onclick="deleteConsult(this.dataset.cid, +this.dataset.idx)">삭제</button>';
+    h += '</div></div>';
+  });
+  return h;
+}
+
+function updateConsultUI(cid) {
+  var d = findCompany(cid); if (!d) return;
+  var consults = getConsults(d);
+  var safeId = esc(cid);
+  var cl = document.getElementById('cl_' + safeId);
+  var cc = document.getElementById('cc_' + safeId);
+  if (cl) cl.innerHTML = renderConsultList(cid, consults);
+  if (cc) cc.textContent = consults.length + '건';
+  refreshStats();
+}
+
+function openConsultModal(cid, idx) {
+  var d = findCompany(cid); if (!d) return;
+  var consults = getConsults(d);
+  var isEdit = (idx !== null && idx !== undefined && !isNaN(idx));
+  var existing = isEdit ? (consults[idx] || {}) : {date: '', type: '', body: '', staff: ''};
+  consultEditTarget = {cid: cid, idx: isEdit ? idx : null};
+  document.getElementById('consultModalTitle').textContent = isEdit ? '상담내역 수정' : '상담내역 추가';
+  var today = new Date();
+  var mm = String(today.getFullYear()).slice(2) + '.' + String(today.getMonth() + 1).padStart(2, '0');
+  var bod = esc(existing.body || '');
+  document.getElementById('consultModalBody').innerHTML =
+    '<div class="form-row">' +
+    '<div class="form-group"><label class="form-label">날짜 (예: 25.04)</label>' +
+    '<input class="form-input" id="c_date" value="' + esc(existing.date || mm) + '" placeholder="YY.MM"></div>' +
+    '<div class="form-group"><label class="form-label">유형</label>' +
+    '<input class="form-input" id="c_type" value="' + esc(existing.type || '') + '" placeholder="1:1 방문컨설팅, UNGM 등록 지원 등"></div></div>' +
+    '<div class="form-group" style="margin-bottom:10px"><label class="form-label">상담내용 *</label>' +
+    '<textarea class="form-input form-textarea" id="c_body" placeholder="상담 내용을 입력하세요">' + bod + '</textarea></div>' +
+    '<div class="form-group"><label class="form-label">담당자</label>' +
+    '<input class="form-input" id="c_staff" value="' + esc(existing.staff || '') + '" placeholder="담당자 이름"></div>' +
+    '<div class="form-actions"><button class="btn-cancel" onclick="closeConsultModal()">취소</button>' +
+    '<button class="btn-save" onclick="saveConsult()">저장</button></div>';
+  document.getElementById('consultModal').classList.add('show');
+}
+
+function closeConsultModal() { document.getElementById('consultModal').classList.remove('show'); }
+
+function saveConsult() {
+  var t = consultEditTarget; if (!t) return;
+  var d = findCompany(t.cid); if (!d) return;
+  var body = document.getElementById('c_body').value.trim();
+  if (!body) { showToast('상담내용을 입력하세요', true); return; }
+  var entry = {
+    date: document.getElementById('c_date').value.trim(),
+    type: document.getElementById('c_type').value.trim(),
+    body: body,
+    staff: document.getElementById('c_staff').value.trim()
+  };
+  var consults = getConsults(d).slice();
+  if (t.idx !== null && t.idx !== undefined) consults[t.idx] = entry;
+  else consults.push(entry);
+  consults.sort(function(a, b) { return (a.date || '').localeCompare(b.date || ''); });
+  d.consults = consults;
+  d.consult_raw = '';
+  saveCompany(d).then(function() {
+    closeConsultModal(); updateConsultUI(t.cid);
+    showToast(t.idx !== null ? '수정 완료' : '추가 완료');
+  }).catch(function() {
+    closeConsultModal(); updateConsultUI(t.cid);
+    showToast(t.idx !== null ? '수정 완료 (로컬)' : '추가 완료 (로컬)');
+  });
+}
+
+function deleteConsult(cid, idx) {
+  if (!confirm('이 상담내역을 삭제하시겠습니까?')) return;
+  var d = findCompany(cid); if (!d) return;
+  var consults = getConsults(d).slice();
+  consults.splice(idx, 1);
+  d.consults = consults; d.consult_raw = '';
+  saveCompany(d).then(function() { updateConsultUI(cid); showToast('삭제 완료'); })
+    .catch(function() { updateConsultUI(cid); showToast('삭제 완료 (로컬)'); });
+}
+
+function updateFavBtn() {
+  var btn = document.getElementById('favBtnResult');
+  if (!btn || !currentViewId) return;
+  var f = isFav(currentViewId);
+  btn.className = 'fav-btn' + (f ? ' active' : '');
+  btn.innerHTML = f ? '★ 즐겨찾기 해제' : '☆ 즐겨찾기 추가';
+}
+
+function toggleFav(id) {
+  if (isFav(id)) {
+    removeFav(id).then(function() { showToast('즐겨찾기 해제'); updateFavBtn(); });
+  } else {
+    var d = findCompany(id);
+    if (d) addFav(d).then(function() { showToast('즐겨찾기 추가'); updateFavBtn(); });
+  }
+}
+
+function renderFavs() {
+  var el = document.getElementById('favList');
+  if (!FAVS.length) {
+    el.innerHTML = '<div class="fav-empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><p>즐겨찾기한 기업이 없습니다</p></div>';
+    return;
+  }
+  var h = '<div class="fav-list">';
+  FAVS.forEach(function(f) {
+    var fid = esc(f.id || f.n);
+    h += '<div class="fav-card" data-cid="' + fid + '" onclick="goToCompany(this.dataset.cid)">';
+    h += '<div class="fav-card-info"><div class="fav-card-name">' + esc(f.n) + '</div>';
+    h += '<div class="fav-card-meta">' + esc(f.cat || '') + ' · ' + esc(f.loc || '') + '</div></div>';
+    h += '<span class="fav-yr">' + esc(f.yr || '') + '</span>';
+    h += '<button class="fav-remove" data-fid="' + fid + '" onclick="event.stopPropagation();removeFav(this.dataset.fid)">&times;</button></div>';
+  });
+  h += '</div>';
+  el.innerHTML = h;
+}
+
+function renderDbTable() {
+  var q = (document.getElementById('dbSearch').value || '').trim().toLowerCase();
+  var yr = document.getElementById('dbYrFilter').value;
+  var list = DB.filter(function(d) {
+    var mq = !q || d.n.toLowerCase().indexOf(q) !== -1 || (d.cat && d.cat.toLowerCase().indexOf(q) !== -1);
+    var my = !yr || (d.yr && d.yr.indexOf(yr) !== -1);
+    return mq && my;
+  });
+  var tp = Math.max(1, Math.ceil(list.length / dbPP));
+  if (dbPage >= tp) dbPage = tp - 1;
+  var st = dbPage * dbPP, pg = list.slice(st, st + dbPP);
+  var h = '';
+  pg.forEach(function(d, i) {
+    var cn = getConsults(d).length;
+    var did = esc(d.id || d.n);
+    h += '<tr><td>' + (st + i + 1) + '</td>';
+    h += '<td style="font-weight:600">' + esc(d.n) + '</td>';
+    h += '<td>' + esc(d.ceo || '') + '</td>';
+    h += '<td>' + esc(d.cat || '') + '</td>';
+    h += '<td>' + esc(d.loc || '') + '</td>';
+    h += '<td>' + esc(d.yr || '') + '</td>';
+    h += '<td><span style="background:var(--accent-1-dim);color:var(--accent-1);padding:2px 8px;border-radius:6px;font-weight:700">' + cn + '</span></td>';
+    h += '<td style="display:flex;gap:4px">';
+    h += '<button class="act-btn act-edit" data-id="' + did + '" onclick="openEditModal(this.dataset.id)">수정</button>';
+    h += '<button class="act-btn act-del" data-id="' + did + '" onclick="deleteRecord(this.dataset.id)">삭제</button>';
+    h += '</td></tr>';
+  });
+  document.getElementById('dbBody').innerHTML = h || '<tr><td colspan="8" style="text-align:center;padding:40px;color:var(--text-muted)">데이터 없음</td></tr>';
+  document.getElementById('dbPageInfo').textContent = '전체 ' + list.length + '개 중 ' + (st + 1) + '–' + Math.min(st + dbPP, list.length);
+  var ph = '<button ' + (dbPage === 0 ? 'disabled' : '') + ' onclick="dbPage=0;renderDbTable()">&#171;</button>';
+  ph += '<button ' + (dbPage === 0 ? 'disabled' : '') + ' onclick="dbPage--;renderDbTable()">&#8249;</button>';
+  var ps = Math.max(0, dbPage - 2), pe = Math.min(tp - 1, dbPage + 2);
+  for (var p = ps; p <= pe; p++) ph += '<button class="' + (p === dbPage ? 'active' : '') + '" onclick="dbPage=' + p + ';renderDbTable()">' + (p + 1) + '</button>';
+  ph += '<button ' + (dbPage >= tp - 1 ? 'disabled' : '') + ' onclick="dbPage++;renderDbTable()">&#8250;</button>';
+  ph += '<button ' + (dbPage >= tp - 1 ? 'disabled' : '') + ' onclick="dbPage=' + (tp - 1) + ';renderDbTable()">&#187;</button>';
+  document.getElementById('dbPag').innerHTML = ph;
+}
+
+var FIELDS = [
+  {k:'n',l:'기업명',req:1},{k:'ceo',l:'대표자'},{k:'cat',l:'품목군'},{k:'prod',l:'대표품목'},
+  {k:'loc',l:'소재지'},{k:'yr',l:'선정년도'},{k:'country',l:'진출국가'},{k:'tech',l:'기술성/인증'},
+  {k:'vendor',l:'벤더등록'},{k:'un',l:'UN협의체'},{k:'otherbiz',l:'협회타사업'},
+  {k:'off',l:'사무실전화'},{k:'fax',l:'팩스'},{k:'mgr',l:'담당자'},{k:'ph',l:'휴대폰'},
+  {k:'em',l:'이메일'},{k:'hp',l:'홈페이지'},{k:'adr',l:'본사주소'}
+];
+var CHECKS = [
+  {k:'inn',l:'혁신제품'},{k:'ven',l:'벤처기업'},{k:'wom',l:'여성기업'},{k:'dis',l:'장애인기업'},
+  {k:'soc',l:'사회적기업'},{k:'gpass',l:'G-PASS인증'},{k:'member',l:'회원사'},{k:'exec',l:'임원사'}
+];
+var RESULT_FIELDS = [
+  {k:'r21',l:'수주성과2021'},{k:'r22',l:'수주성과2022'},{k:'r23',l:'수주성과2023'},
+  {k:'r24',l:'수주성과2024'},{k:'r25',l:'수주성과2025'},{k:'r26',l:'수주성과2026'}
+];
+
+function buildForm(data) {
+  var h = '<div class="form-section-title">기본 정보</div>';
+  for (var i = 0; i < FIELDS.length; i += 2) {
+    h += '<div class="form-row">';
+    for (var j = i; j < Math.min(i + 2, FIELDS.length); j++) {
+      var f = FIELDS[j], v = data ? (data[f.k] != null ? data[f.k] : '') : '';
+      h += '<div class="form-group"><label class="form-label">' + f.l + (f.req ? ' *' : '') + '</label>';
+      h += '<input class="form-input" id="f_' + f.k + '" value="' + esc(String(v)) + '" placeholder="' + f.l + '"></div>';
+    }
+    h += '</div>';
+  }
+  h += '<div class="form-section-title">기업 특성</div><div style="display:flex;flex-wrap:wrap;gap:12px;margin-bottom:12px">';
+  CHECKS.forEach(function(f) {
+    var v = data ? data[f.k] : '';
+    h += '<label style="display:flex;align-items:center;gap:5px;font-size:13px;color:var(--text-dim);cursor:pointer">';
+    h += '<input type="checkbox" id="f_' + f.k + '" ' + (v ? 'checked' : '') + ' style="width:14px;height:14px"> ' + f.l + '</label>';
+  });
+  h += '</div><div class="form-section-title">수주성과</div>';
+  for (var i = 0; i < RESULT_FIELDS.length; i += 2) {
+    h += '<div class="form-row">';
+    for (var j = i; j < Math.min(i + 2, RESULT_FIELDS.length); j++) {
+      var f = RESULT_FIELDS[j], v = data ? (data[f.k] != null ? data[f.k] : '') : '';
+      h += '<div class="form-group"><label class="form-label">' + f.l + '</label>';
+      h += '<input class="form-input" id="f_' + f.k + '" value="' + esc(String(v)) + '" placeholder="수주 내역"></div>';
+    }
+    h += '</div>';
+  }
+  h += '<div class="form-actions"><button class="btn-cancel" onclick="closeModal()">취소</button><button class="btn-save" onclick="saveForm()">저장</button></div>';
+  return h;
+}
+
+function openAddModal() {
+  editingId = null;
+  document.getElementById('modalTitle').textContent = '신규 기업 등록';
+  document.getElementById('modalBody').innerHTML = buildForm(null);
+  document.getElementById('modal').classList.add('show');
+}
+function openEditModal(id) {
+  var d = findCompany(id); if (!d) return;
+  editingId = id;
+  document.getElementById('modalTitle').textContent = '기업 정보 수정';
+  document.getElementById('modalBody').innerHTML = buildForm(d);
+  document.getElementById('modal').classList.add('show');
+}
+function closeModal() { document.getElementById('modal').classList.remove('show'); }
+
+document.getElementById('modal').addEventListener('click', function(e) { if (e.target === this) closeModal(); });
+document.getElementById('consultModal').addEventListener('click', function(e) { if (e.target === this) closeConsultModal(); });
+
+function saveForm() {
+  var n = document.getElementById('f_n').value.trim();
+  if (!n) { showToast('기업명은 필수입니다', true); return; }
+  var rec = {n: n, id: docId(n)};
+  FIELDS.forEach(function(f) { if (f.k !== 'n') rec[f.k] = document.getElementById('f_' + f.k).value.trim(); });
+  CHECKS.forEach(function(f) { rec[f.k] = document.getElementById('f_' + f.k).checked ? 'O' : ''; });
+  RESULT_FIELDS.forEach(function(f) { rec[f.k] = document.getElementById('f_' + f.k).value.trim(); });
+  if (editingId) {
+    var old = findCompany(editingId);
+    if (old) { rec.consults = old.consults || []; rec.consult_raw = old.consult_raw || ''; }
+  }
+  saveCompany(rec).then(function() {
+    closeModal(); showToast(editingId ? '수정 완료' : '등록 완료');
+  }).catch(function(e) { showToast('저장 실패: ' + e.message, true); });
+}
+
+function deleteRecord(id) {
+  if (!confirm('정말 삭제하시겠습니까?')) return;
+  deleteCompany(id).then(function() { showToast('삭제 완료'); }).catch(function() { showToast('삭제 실패', true); });
+}
+
+function exportCsv() {
+  if (!DB.length) { showToast('내보낼 데이터 없음', true); return; }
+  var keys = ['n','ceo','cat','prod','loc','yr','country','inn','ven','wom','dis','soc','gpass','member','exec','un','otherbiz','tech','vendor','r21','r22','r23','r24','r25','r26','off','fax','mgr','ph','em','hp','adr'];
+  var csv = keys.join(',') + '\n';
+  DB.forEach(function(d) {
+    csv += keys.map(function(k) {
+      var v = d[k] != null ? String(d[k]) : '';
+      return (v.indexOf(',') !== -1 || v.indexOf('"') !== -1) ? '"' + v.replace(/"/g, '""') + '"' : v;
+    }).join(',') + '\n';
+  });
+  var blob = new Blob(['\uFEFF' + csv], {type: 'text/csv;charset=utf-8;'});
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a'); a.href = url;
+  a.download = 'kodabiz_' + new Date().toISOString().slice(0, 10) + '.csv'; a.click();
+  URL.revokeObjectURL(url); showToast('CSV 내보내기 완료');
+}
+
+document.getElementById('tabBar').addEventListener('click', function(e) {
+  var btn = e.target.closest('.tab-btn'); if (!btn) return;
+  document.querySelectorAll('.tab-btn').forEach(function(b) { b.classList.remove('active'); });
+  document.querySelectorAll('.tab-content').forEach(function(c) { c.classList.remove('active'); });
+  btn.classList.add('active');
+  document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+  if (btn.dataset.tab === 'db') renderDbTable();
+  if (btn.dataset.tab === 'favs') renderFavs();
+});
+
 </script>
 </body>
 </html>
